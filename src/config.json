@@ -1,0 +1,77 @@
+{
+    "opensubsonic_server": {
+        "protocol": "https",
+        "server": "server.com",
+        "username": "",
+        "password": ""
+    },
+    "scrobbler": {
+        "listenbrainz_enable": true,
+        "listenbrainz_token": "",
+        "lastfm_enable": true,
+        "lastfm_username": "",
+        "lastfm_password": "",
+        "lastfm_api_key": "",
+        "lastfm_api_secret": "",
+        "lastfm_session_key": ""
+    },
+    "audio": {
+        "equalizer": {
+            "enable": true,
+            "followPitch": true,
+            "graph": [
+                {
+                    "bandwidth": 0.5,
+                    "frequency": 22,
+                    "gain": 17,
+                    "bypass": false
+                },
+                {
+                    "bandwidth": 0.5,
+                    "frequency": 28,
+                    "gain": 17,
+                    "bypass": false
+                },
+                {
+                    "bandwidth": 0.5,
+                    "frequency": 35,
+                    "gain": 8.6,
+                    "bypass": false
+                },
+                {
+                    "bandwidth": 0.5,
+                    "frequency": 43,
+                    "gain": 5.4,
+                    "bypass": false
+                },
+                {
+                    "bandwidth": 0.5,
+                    "frequency": 53,
+                    "gain": 12.3,
+                    "bypass": false
+                },
+                {
+                    "bandwidth": 0.5,
+                    "frequency": 66,
+                    "gain": 5.1,
+                    "bypass": false
+                },
+                {
+                    "bandwidth": 0.5,
+                    "frequency": 82,
+                    "gain": 0,
+                    "bypass": false
+                }
+            ]
+        },
+        "pitch": {
+            "enable": true,
+            "cents": -270.0,
+            "rate": 1.0
+        },
+        "reverb": {
+            "enable": true,
+            "wetDryMix": 15.0
+        }
+    }
+}
