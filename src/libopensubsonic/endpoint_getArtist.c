@@ -10,7 +10,7 @@
 // Returns 1 if failure occured, else 0
 int opensubsonic_getArtist_parse(char* data, opensubsonic_getArtist_struct** getArtistStruct) {
     // Allocate struct
-    *getArtistStruct = (opensubsonic_getArtist_struct*)malloc(sizeof(opensubsonic_getArtist_struct));
+    *getArtistStruct = malloc(sizeof(opensubsonic_getArtist_struct));
     
     // Initialize struct variables
     (*getArtistStruct)->status = NULL;
@@ -89,7 +89,7 @@ int opensubsonic_getArtist_parse(char* data, opensubsonic_getArtist_struct** get
     (*getArtistStruct)->albumCount = cJSON_GetArraySize(album_root);
     
     // Allocate memory for albums
-    (*getArtistStruct)->albums = (opensubsonic_getArtist_album_struct*)malloc((*getArtistStruct)->albumCount * sizeof(opensubsonic_getArtist_album_struct));
+    (*getArtistStruct)->albums = malloc((*getArtistStruct)->albumCount * sizeof(opensubsonic_getArtist_album_struct));
 
     // Initialize variables
     for (int i = 0; i < (*getArtistStruct)->albumCount; i++) {

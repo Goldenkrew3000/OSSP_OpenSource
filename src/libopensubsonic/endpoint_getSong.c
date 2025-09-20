@@ -10,7 +10,7 @@
 // Returns 1 if failure occured, else 0
 int opensubsonic_getSong_parse(char* data, opensubsonic_getSong_struct** getSongStruct) {
     // Allocate struct
-    *getSongStruct = (opensubsonic_getSong_struct*)malloc(sizeof(opensubsonic_getSong_struct));
+    *getSongStruct = malloc(sizeof(opensubsonic_getSong_struct));
     
     // Initialize struct variables
     (*getSongStruct)->status = NULL;

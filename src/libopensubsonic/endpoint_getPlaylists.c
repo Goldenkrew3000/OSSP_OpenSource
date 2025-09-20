@@ -10,7 +10,7 @@
 // Returns 1 if failure occured, else 0
 int opensubsonic_getPlaylists_parse(char* data, opensubsonic_getPlaylists_struct** getPlaylistsStruct) {
     // Allocate struct
-    *getPlaylistsStruct = (opensubsonic_getPlaylists_struct*)malloc(sizeof(opensubsonic_getPlaylists_struct));
+    *getPlaylistsStruct = malloc(sizeof(opensubsonic_getPlaylists_struct));
     
     // Initialize struct variables
     (*getPlaylistsStruct)->status = NULL;
@@ -76,7 +76,7 @@ int opensubsonic_getPlaylists_parse(char* data, opensubsonic_getPlaylists_struct
     (*getPlaylistsStruct)->playlistCount = cJSON_GetArraySize(playlist_root);
     
     // Allocate memory for opensubsonic_getPlaylists_playlist_struct inside opensubsonic_getPlaylists_struct
-    (*getPlaylistsStruct)->playlists = (opensubsonic_getPlaylists_playlist_struct*)malloc((*getPlaylistsStruct)->playlistCount * sizeof(opensubsonic_getPlaylists_playlist_struct));
+    (*getPlaylistsStruct)->playlists = malloc((*getPlaylistsStruct)->playlistCount * sizeof(opensubsonic_getPlaylists_playlist_struct));
     
     // Initialize struct variables
     for (int i = 0; i < (*getPlaylistsStruct)->playlistCount; i++) {

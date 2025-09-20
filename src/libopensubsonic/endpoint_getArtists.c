@@ -10,7 +10,7 @@
 // Returns 1 if failure occured, else 0
 int opensubsonic_getArtists_parse(char* data, opensubsonic_getArtists_struct** getArtistsStruct) {
     // Allocate struct
-    *getArtistsStruct = (opensubsonic_getArtists_struct*)malloc(sizeof(opensubsonic_getArtists_struct));
+    *getArtistsStruct = malloc(sizeof(opensubsonic_getArtists_struct));
     
     // Initialize struct variables
     (*getArtistsStruct)->status = NULL;
@@ -91,7 +91,7 @@ int opensubsonic_getArtists_parse(char* data, opensubsonic_getArtists_struct** g
     }
 
     // Allocate memory for opensubsonic_getArtists_artist_struct inside opensubsonic_getArtists_struct (Where the artist data is held)
-    (*getArtistsStruct)->artists = (opensubsonic_getArtists_artist_struct*)malloc((*getArtistsStruct)->artistCount * sizeof(opensubsonic_getArtists_artist_struct));
+    (*getArtistsStruct)->artists = malloc((*getArtistsStruct)->artistCount * sizeof(opensubsonic_getArtists_artist_struct));
 
     // Initialize struct variables
     for (int i = 0; i < (*getArtistsStruct)->artistCount; i++) {

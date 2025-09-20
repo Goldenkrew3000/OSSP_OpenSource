@@ -9,7 +9,7 @@
 // Returns 1 if failure occured, else 0
 int opensubsonic_scrobble_parse(char* data, opensubsonic_scrobble_struct** scrobbleStruct) {
     // Allocate and initialize
-    (*scrobbleStruct) = (opensubsonic_scrobble_struct*)malloc(sizeof(opensubsonic_scrobble_struct));
+    (*scrobbleStruct) = malloc(sizeof(opensubsonic_scrobble_struct));
     (*scrobbleStruct)->status = NULL;
     (*scrobbleStruct)->errorCode = 0;
     (*scrobbleStruct)->errorMessage = NULL;

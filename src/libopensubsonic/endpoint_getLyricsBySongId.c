@@ -94,7 +94,7 @@ int opensubsonic_getLyricsBySongId_parse(char* data, opensubsonic_getLyricsBySon
 
     // Count amount of objects in 'line' and allocate memory
     (*getLyricsBySongIdStruct)->lyricsAmount = cJSON_GetArraySize(line_root);
-    (*getLyricsBySongIdStruct)->lyrics = (opensubsonic_getLyricsBySongId_lyric_struct*)malloc((*getLyricsBySongIdStruct)->lyricsAmount * sizeof(opensubsonic_getLyricsBySongId_lyric_struct));
+    (*getLyricsBySongIdStruct)->lyrics = malloc((*getLyricsBySongIdStruct)->lyricsAmount * sizeof(opensubsonic_getLyricsBySongId_lyric_struct));
     
     // Initialize variables
     for (int i = 0; i < (*getLyricsBySongIdStruct)->lyricsAmount; i++) {

@@ -9,7 +9,7 @@
 // Returns 1 if failure occured, else 0
 int opensubsonic_getAlbum_parse(char* data, opensubsonic_getAlbum_struct** getAlbumStruct) {
     // Allocate and initialize
-    (*getAlbumStruct) = (opensubsonic_getAlbum_struct*)malloc(sizeof(opensubsonic_getAlbum_struct));
+    (*getAlbumStruct) = malloc(sizeof(opensubsonic_getAlbum_struct));
     (*getAlbumStruct)->status = NULL;
     (*getAlbumStruct)->errorCode = 0;
     (*getAlbumStruct)->errorMessage = NULL;
@@ -93,7 +93,7 @@ int opensubsonic_getAlbum_parse(char* data, opensubsonic_getAlbum_struct** getAl
     (*getAlbumStruct)->songCount = cJSON_GetArraySize(song_root);
 
     // Allocate and initialize
-    (*getAlbumStruct)->songs = (opensubsonic_getAlbum_song_struct*)malloc((*getAlbumStruct)->songCount * sizeof(opensubsonic_getAlbum_song_struct));
+    (*getAlbumStruct)->songs = malloc((*getAlbumStruct)->songCount * sizeof(opensubsonic_getAlbum_song_struct));
 
     for (int i = 0; i < (*getAlbumStruct)->songCount; i++) {
         (*getAlbumStruct)->songs[i].id = NULL;

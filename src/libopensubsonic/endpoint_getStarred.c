@@ -9,7 +9,7 @@
 // Returns 1 if failure occured, else 0
 int opensubsonic_getStarred_parse(char* data, opensubsonic_getStarred_struct** getStarredStruct) {
     // Allocate and initialize
-    *getStarredStruct = (opensubsonic_getStarred_struct*)malloc(sizeof(opensubsonic_getStarred_struct));
+    *getStarredStruct = malloc(sizeof(opensubsonic_getStarred_struct));
     (*getStarredStruct)->status = NULL;
     (*getStarredStruct)->errorMessage = NULL;
     (*getStarredStruct)->errorCode = 0;
@@ -86,7 +86,7 @@ int opensubsonic_getStarred_parse(char* data, opensubsonic_getStarred_struct** g
     if ((*getStarredStruct)->artistCount != -1) {
         // Count, allocate, initialize, and extract
         (*getStarredStruct)->artistCount = cJSON_GetArraySize(artist_root);
-        (*getStarredStruct)->artists = (opensubsonic_getStarred_artist_struct*)malloc((*getStarredStruct)->artistCount * sizeof(opensubsonic_getStarred_artist_struct));
+        (*getStarredStruct)->artists = malloc((*getStarredStruct)->artistCount * sizeof(opensubsonic_getStarred_artist_struct));
         
         for (int i = 0; i < (*getStarredStruct)->artistCount; i++) {
             (*getStarredStruct)->artists[i].id = NULL;
@@ -113,7 +113,7 @@ int opensubsonic_getStarred_parse(char* data, opensubsonic_getStarred_struct** g
     if ((*getStarredStruct)->albumCount != -1) {
         // Count, allocate, initialize, and extract
         (*getStarredStruct)->albumCount = cJSON_GetArraySize(album_root);
-        (*getStarredStruct)->albums = (opensubsonic_getStarred_album_struct*)malloc((*getStarredStruct)->albumCount * sizeof(opensubsonic_getStarred_album_struct));
+        (*getStarredStruct)->albums = malloc((*getStarredStruct)->albumCount * sizeof(opensubsonic_getStarred_album_struct));
 
         for (int i = 0; i < (*getStarredStruct)->albumCount; i++) {
             (*getStarredStruct)->albums[i].id = NULL;
@@ -160,7 +160,7 @@ int opensubsonic_getStarred_parse(char* data, opensubsonic_getStarred_struct** g
     if ((*getStarredStruct)->songCount != -1) {
         // Count, allocate, initialize, and extract
         (*getStarredStruct)->songCount = cJSON_GetArraySize(song_root);
-        (*getStarredStruct)->songs = (opensubsonic_getStarred_song_struct*)malloc((*getStarredStruct)->songCount * sizeof(opensubsonic_getStarred_song_struct));
+        (*getStarredStruct)->songs = malloc((*getStarredStruct)->songCount * sizeof(opensubsonic_getStarred_song_struct));
         
         for (int i = 0; i < (*getStarredStruct)->songCount; i++) {
             (*getStarredStruct)->songs[i].id = NULL;

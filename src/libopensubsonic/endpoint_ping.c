@@ -10,7 +10,7 @@
 // Returns 1 if failure occured, else 0
 int opensubsonic_ping_parse(char* data, opensubsonic_ping_struct** pingStruct) {
     // Allocate on the heap
-    *pingStruct = (opensubsonic_ping_struct*)malloc(sizeof(opensubsonic_ping_struct));
+    *pingStruct = malloc(sizeof(opensubsonic_ping_struct));
     
     // Initialize struct variables
     (*pingStruct)->status = NULL;
@@ -61,7 +61,6 @@ int opensubsonic_ping_parse(char* data, opensubsonic_ping_struct** pingStruct) {
     return 1;
 }
 
-// Free the dynamically allocated elements of the opensubsonic_ping_struct structure
 void opensubsonic_ping_struct_free(opensubsonic_ping_struct** pingStruct) {
     logger_log_general(__func__, "Freeing /ping endpoint heap objects.");
     if ((*pingStruct)->status != NULL) { free((*pingStruct)->status); }
