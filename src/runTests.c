@@ -20,12 +20,12 @@
 #include "libopensubsonic/endpoint_getAlbum.h"
 #include "libopensubsonic/endpoint_getLyricsBySongId.h"
 
-configHandler_config_t* test_configObj = NULL;
+configHandler_config_t* configObj = NULL;
 
 void test_libopensubsonic_endpoint_ping(void) {
     logger_log_general(__func__, "Testing ping endpoint.");
     
-    opensubsonic_httpClient_URL_t* url = (opensubsonic_httpClient_URL_t*)malloc(sizeof(opensubsonic_httpClient_URL_t));
+    opensubsonic_httpClient_URL_t* url = malloc(sizeof(opensubsonic_httpClient_URL_t));
     opensubsonic_httpClient_URL_prepare(&url);
     url->endpoint = OPENSUBSONIC_ENDPOINT_PING;
     opensubsonic_httpClient_formUrl(&url);
@@ -40,7 +40,7 @@ void test_libopensubsonic_endpoint_ping(void) {
 void test_libopensubsonic_endpoint_getStarred(void) {
     logger_log_general(__func__, "Testing getStarred endpoint.");
     
-    opensubsonic_httpClient_URL_t* url = (opensubsonic_httpClient_URL_t*)malloc(sizeof(opensubsonic_httpClient_URL_t));
+    opensubsonic_httpClient_URL_t* url = malloc(sizeof(opensubsonic_httpClient_URL_t));
     opensubsonic_httpClient_URL_prepare(&url);
     url->endpoint = OPENSUBSONIC_ENDPOINT_GETSTARRED;
     opensubsonic_httpClient_formUrl(&url);
@@ -55,7 +55,7 @@ void test_libopensubsonic_endpoint_getStarred(void) {
 void test_libopensubsonic_endpoint_getPlaylists(void) {
     logger_log_general(__func__, "Testing getPlaylists endpoint.");
     
-    opensubsonic_httpClient_URL_t* url = (opensubsonic_httpClient_URL_t*)malloc(sizeof(opensubsonic_httpClient_URL_t));
+    opensubsonic_httpClient_URL_t* url = malloc(sizeof(opensubsonic_httpClient_URL_t));
     opensubsonic_httpClient_URL_prepare(&url);
     url->endpoint = OPENSUBSONIC_ENDPOINT_GETPLAYLISTS;
     opensubsonic_httpClient_formUrl(&url);
@@ -70,7 +70,7 @@ void test_libopensubsonic_endpoint_getPlaylists(void) {
 void test_libopensubsonic_endpoint_getPlaylist(void) {
     logger_log_general(__func__, "Testing getPlaylist endpoint.");
     
-    opensubsonic_httpClient_URL_t* url = (opensubsonic_httpClient_URL_t*)malloc(sizeof(opensubsonic_httpClient_URL_t));
+    opensubsonic_httpClient_URL_t* url = malloc(sizeof(opensubsonic_httpClient_URL_t));
     opensubsonic_httpClient_URL_prepare(&url);
     url->endpoint = OPENSUBSONIC_ENDPOINT_GETPLAYLIST;
     url->id = strdup("dkBA3oVi5zpChEVIDVJn4i");
@@ -86,7 +86,7 @@ void test_libopensubsonic_endpoint_getPlaylist(void) {
 void test_libopensubsonic_endpoint_getSong(void) {
     logger_log_general(__func__, "Testing getSong endpoint.");
     
-    opensubsonic_httpClient_URL_t* url = (opensubsonic_httpClient_URL_t*)malloc(sizeof(opensubsonic_httpClient_URL_t));
+    opensubsonic_httpClient_URL_t* url = malloc(sizeof(opensubsonic_httpClient_URL_t));
     opensubsonic_httpClient_URL_prepare(&url);
     url->endpoint = OPENSUBSONIC_ENDPOINT_GETSONG;
     url->id = strdup("c24SgyyHpe86IsAwSV73rx");
@@ -102,7 +102,7 @@ void test_libopensubsonic_endpoint_getSong(void) {
 void test_libopensubsonic_endpoint_getArtists(void) {
     logger_log_general(__func__, "Testing getArtists endpoint.");
     
-    opensubsonic_httpClient_URL_t* url = (opensubsonic_httpClient_URL_t*)malloc(sizeof(opensubsonic_httpClient_URL_t));
+    opensubsonic_httpClient_URL_t* url = malloc(sizeof(opensubsonic_httpClient_URL_t));
     opensubsonic_httpClient_URL_prepare(&url);
     url->endpoint = OPENSUBSONIC_ENDPOINT_GETARTISTS;
     opensubsonic_httpClient_formUrl(&url);
@@ -117,7 +117,7 @@ void test_libopensubsonic_endpoint_getArtists(void) {
 void test_libopensubsonic_endpoint_getArtist(void) {
     logger_log_general(__func__, "Testing getArtist endpoint.");
     
-    opensubsonic_httpClient_URL_t* url = (opensubsonic_httpClient_URL_t*)malloc(sizeof(opensubsonic_httpClient_URL_t));
+    opensubsonic_httpClient_URL_t* url = malloc(sizeof(opensubsonic_httpClient_URL_t));
     opensubsonic_httpClient_URL_prepare(&url);
     url->endpoint = OPENSUBSONIC_ENDPOINT_GETARTIST;
     url->id = strdup("3mZKW6zlodlLW4x4QLDhPr");
@@ -133,7 +133,7 @@ void test_libopensubsonic_endpoint_getArtist(void) {
 void test_libopensubsonic_endpoint_getAlbumList(void) {
     logger_log_general(__func__, "Testing getAlbumList endpoint.");
     
-    opensubsonic_httpClient_URL_t* url = (opensubsonic_httpClient_URL_t*)malloc(sizeof(opensubsonic_httpClient_URL_t));
+    opensubsonic_httpClient_URL_t* url = malloc(sizeof(opensubsonic_httpClient_URL_t));
     opensubsonic_httpClient_URL_prepare(&url);
     url->endpoint = OPENSUBSONIC_ENDPOINT_GETALBUMLIST;
     url->type = OPENSUBSONIC_ENDPOINT_GETALBUMLIST_RECENT;
@@ -150,7 +150,7 @@ void test_libopensubsonic_endpoint_getAlbumList(void) {
 void test_libopensubsonic_endpoint_getAlbum(void) {
     logger_log_general(__func__, "Testing getAlbum endpoint.");
     
-    opensubsonic_httpClient_URL_t* url = (opensubsonic_httpClient_URL_t*)malloc(sizeof(opensubsonic_httpClient_URL_t));
+    opensubsonic_httpClient_URL_t* url = malloc(sizeof(opensubsonic_httpClient_URL_t));
     opensubsonic_httpClient_URL_prepare(&url);
     url->endpoint = OPENSUBSONIC_ENDPOINT_GETALBUM;
     url->id = strdup("5OjqcCVp8LbDfamfubZxFN");
@@ -166,7 +166,7 @@ void test_libopensubsonic_endpoint_getAlbum(void) {
 void test_libopensubsonic_endpoint_getLyricsBySongId(void) {
     logger_log_general(__func__, "Testing getLyricsBySongId endpoint.");
     
-    opensubsonic_httpClient_URL_t* url = (opensubsonic_httpClient_URL_t*)malloc(sizeof(opensubsonic_httpClient_URL_t));
+    opensubsonic_httpClient_URL_t* url = malloc(sizeof(opensubsonic_httpClient_URL_t));
     opensubsonic_httpClient_URL_prepare(&url);
     url->endpoint = OPENSUBSONIC_ENDPOINT_GETLYRICSBYSONGID;
     url->id = strdup("pvu323svJrim683Xf8fBV8");
@@ -179,9 +179,16 @@ void test_libopensubsonic_endpoint_getLyricsBySongId(void) {
     opensubsonic_httpClient_URL_cleanup(&url);
 }
 
-void runTests(void) {
+int main(void) {
+    int rc = 0;
+
     // Read config file
-    configHandler_Read(&test_configObj);
+    rc = configHandler_Read(&configObj);
+    if (rc != 0) {
+        printf("Could not read config file.\n");
+        return 1;
+    }
+    opensubsonic_crypto_generateLogin();
     
     // Run tests
     test_libopensubsonic_endpoint_ping();
@@ -195,6 +202,6 @@ void runTests(void) {
     test_libopensubsonic_endpoint_getLyricsBySongId();
     
     // Free config file
-    configHandler_Free(&test_configObj);
+    configHandler_Free(&configObj);
 }
 

@@ -6,9 +6,9 @@
 #include "external/cJSON.h"
 #include "libopensubsonic/logger.h"
 
-#if defined(__APPLE__) && defined(__MACH__)
+#if defined(__APPLE__) && defined(__MACH__) && defined(XCODE)
 #include "OSSP_Bridge.h"
-#endif // defined(__APPLE__) && defined(__MACH__)
+#endif // defined(__APPLE__) && defined(__MACH__) && defined(__XCODE__)
 
 static int rc = 0;
 
