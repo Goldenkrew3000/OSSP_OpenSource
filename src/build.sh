@@ -1,4 +1,4 @@
-egcc main.c \
+gcc main.c \
     configHandler.c \
     libopensubsonic/httpclient.c \
     external/cJSON.c \
@@ -17,4 +17,4 @@ egcc main.c \
     libopensubsonic/endpoint_getAlbumList.c \
     libopensubsonic/endpoint_getStarred.c \
     libopensubsonic/endpoint_scrobble.c \
-    -o main -I/usr/local/include -L/usr/local/lib -lcurl
+    -o main -lcurl

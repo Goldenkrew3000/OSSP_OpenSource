@@ -180,8 +180,9 @@ char* opensubsonic_authenticate_lastFm(void) {
  * Sends a scrobble to LastFM
  * If 'finalize' is true, it sends to the track.scrobble endpoint
  * If 'finalize' is false, it sends to the track.updateNowPlaying endpoint
+ * Returns 1 if error, else 0
  */
-void opensubsonic_scrobble_lastFm(bool finalize, opensubsonic_getSong_struct* songStruct) {
+int opensubsonic_scrobble_lastFm(bool finalize, opensubsonic_getSong_struct* songStruct) {
     if (finalize) {
         logger_log_general(__func__, "Performing final scrobble to LastFM.");
     } else {
@@ -194,8 +195,8 @@ void opensubsonic_scrobble_lastFm(bool finalize, opensubsonic_getSong_struct* so
     currentTime = time(NULL);
     rc = asprintf(&currentTime_string, "%ld", currentTime);
     if (rc == -1) {
-        logger_log_error(__func__, "asprintf() failed.");
-        return; // TODO return error
+        logger_log_error(__func__, "asprintf() failed (Could not make char* of UNIX timestamp).");
+        return 1;
     }
     
     // Assemble the signature
@@ -210,8 +211,8 @@ void opensubsonic_scrobble_lastFm(bool finalize, opensubsonic_getSong_struct* so
                       configObj->lastfm_api_session_key, currentTime_string, songStruct->title, configObj->lastfm_api_secret);
     }
     if (rc == -1) {
-        logger_log_error(__func__, "asprintf() failed.");
-        return; // TODO handle error
+        logger_log_error(__func__, "asprintf() failed (Could not assemble plaintext signature).");
+        return 1;
     }
     
     uint8_t sig_md5_bytes[16];
@@ -224,8 +225,8 @@ void opensubsonic_scrobble_lastFm(bool finalize, opensubsonic_getSong_struct* so
                   sig_md5_bytes[8], sig_md5_bytes[9], sig_md5_bytes[10], sig_md5_bytes[11],
                   sig_md5_bytes[12], sig_md5_bytes[13], sig_md5_bytes[14], sig_md5_bytes[15]);
     if (rc == -1) {
-        logger_log_error(__func__, "asprintf() failed.");
-        return; // TODO handle error
+        logger_log_error(__func__, "asprintf() failed (Could not assemble md5 signature).");
+        return 1;
     }
     
     // URI encode strings
@@ -233,13 +234,13 @@ void opensubsonic_scrobble_lastFm(bool finalize, opensubsonic_getSong_struct* so
     char* uri_songArtist = lcue_uriescape(songStruct->artist, (unsigned int)strlen(songStruct->artist));
     char* uri_songAlbum = lcue_uriescape(songStruct->album, (unsigned int)strlen(songStruct->album));
     if (uri_songTitle == NULL || uri_songArtist == NULL || uri_songAlbum == NULL) {
-        logger_log_error(__func__, "lcue_uriescape() error.");
+        logger_log_error(__func__, "lcue_uriescape() error (Could not URI escape required strings).");
         free(currentTime_string);
         free(sig_md5_text);
         if (uri_songTitle != NULL) { free(uri_songTitle); }
         if (uri_songArtist != NULL) { free(uri_songArtist); }
         if (uri_songAlbum != NULL) { free(uri_songAlbum); }
-        return; // TODO return error
+        return 1;
     }
     
     // Assemble the payload
@@ -263,8 +264,8 @@ void opensubsonic_scrobble_lastFm(bool finalize, opensubsonic_getSong_struct* so
     free(uri_songAlbum);
     free(uri_songArtist);
     if (rc == -1) {
-        logger_log_error(__func__, "asprintf() failed.");
-        return; // TODO return error
+        logger_log_error(__func__, "asprintf() failed (Could not assemble payload).");
+        return 1;
     }
     
     // Send scrobble and receive response

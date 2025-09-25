@@ -4,6 +4,6 @@
 #include "endpoint_getSong.h"
 
 char* opensubsonic_authenticate_lastFm(void);
-void opensubsonic_scrobble_lastFm(bool finalize, opensubsonic_getSong_struct* songStruct);
+int opensubsonic_scrobble_lastFm(bool finalize, opensubsonic_getSong_struct* songStruct);
 
 #endif
