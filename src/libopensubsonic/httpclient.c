@@ -412,8 +412,16 @@ void UNIX_HttpRequest(opensubsonic_httpClientRequest_t** httpReq) {
         curl_easy_setopt(curl_handle, CURLOPT_URL, (*httpReq)->requestUrl);
         curl_easy_setopt(curl_handle, CURLOPT_MAXREDIRS, 50L);
         curl_easy_setopt(curl_handle, CURLOPT_TCP_KEEPALIVE,0L);
+
+// Do not use SSL verification on iOS due to an SSL issue with using libcurl on iOS
+#if defined(__APPLE__) && defined(__MACH__) && defined(XCODE)
         curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0L);
         curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 0L);
+#else
+        curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 1L);
+        curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 1L);
+#endif // defined(__APPLE__) && defined(__MACH__) && defined(XCODE)
+
         curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_to_memory);
         curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
         CURLcode res = curl_easy_perform(curl_handle);

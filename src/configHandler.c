@@ -37,6 +37,8 @@ int configHandler_Read(configHandler_config_t** configObj) {
     (*configObj)->lastfm_api_key = NULL;
     (*configObj)->lastfm_api_secret = NULL;
     (*configObj)->lastfm_api_session_key = NULL;
+    (*configObj)->discordrpc_enable = false;
+    (*configObj)->discordrpc_method = 0;
     (*configObj)->audio_equalizer_enable = false;
     (*configObj)->audio_equalizer_followPitch = false;
     (*configObj)->audio_equalizer_graphCount = 0;
@@ -53,7 +55,7 @@ int configHandler_Read(configHandler_config_t** configObj) {
     
     // Form the path to the config JSON
     char* config_path = NULL;
-#if defined(__APPLE__) && defined(__MACH__)
+#if defined(__APPLE__) && defined(__MACH__) && defined(XCODE)
     // NOTE: This is a relatively hacky way of fetching the iOS container path without diving into the hell that is ObjC
     char* root_path = getenv("HOME");
     rc = asprintf(&config_path, "%s/Documents/config.json", root_path);
@@ -62,7 +64,7 @@ int configHandler_Read(configHandler_config_t** configObj) {
 #endif // DEBUG
 #else
     rc = asprintf(&config_path, "config.json");
-#endif // defined(__APPLE__) && defined(__MACH__)
+#endif // defined(__APPLE__) && defined(__MACH__) && defined(XCODE)
     if (rc == -1) {
         logger_log_error(__func__, "asprintf() failed (Could not generate config path).");
         free(config_path);
@@ -200,7 +202,27 @@ int configHandler_Read(configHandler_config_t** configObj) {
     if (cJSON_IsString(scrobbler_lastfm_api_session_key) && scrobbler_lastfm_api_session_key->valuestring != NULL) {
         (*configObj)->lastfm_api_session_key = strdup(scrobbler_lastfm_api_session_key->valuestring);
     }
-    
+
+    // Make an object from discord-rpc
+    cJSON* discordrpc_root = cJSON_GetObjectItemCaseSensitive(root, "discord_rpc");
+    if (discordrpc_root == NULL) {
+        logger_log_error(__func__, "Error parsing JSON - discord-rpc does not exist.");
+        cJSON_Delete(root);
+        return 1;
+    }
+
+    cJSON* discordrpc_enable = cJSON_GetObjectItemCaseSensitive(discordrpc_root, "enable");
+    if (cJSON_IsBool(discordrpc_enable)) {
+        if (cJSON_IsTrue(discordrpc_enable)) {
+            (*configObj)->discordrpc_enable = true;
+        }
+    }
+
+    cJSON* discordrpc_method = cJSON_GetObjectItemCaseSensitive(discordrpc_root, "method");
+    if (cJSON_IsNumber(discordrpc_method)) {
+        (*configObj)->discordrpc_method = discordrpc_method->valueint;
+    }
+
     // Make an object from audio
     cJSON* audio_root = cJSON_GetObjectItemCaseSensitive(root, "audio");
     if (audio_root == NULL) {

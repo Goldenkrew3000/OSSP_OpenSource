@@ -30,6 +30,10 @@ typedef struct {
     char* lastfm_api_secret;            // LastFM API Secret
     char* lastfm_api_session_key;       // LastFM API Session Key (Generated from authorization endpoint)
     
+    // Discord RPC Settings
+    bool discordrpc_enable;             // Enable Discord RPC
+    int discordrpc_method;              // Discord RPC Method (0 = Regular, 1 = DscrdRPC)
+    
     // Audio Settings
     bool audio_equalizer_enable;
     bool audio_equalizer_followPitch;   // Have equalizer align to pitch adjustment
