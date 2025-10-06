@@ -8,15 +8,14 @@ project(ossp)
 
 find_package(CURL REQUIRED)
 find_package(OpenSSL REQUIRED)
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+find_package(OpenGL REQUIRED)
+find_package(SDL2 REQUIRED)
 
-qt_standard_project_setup()
+add_subdirectory(external/discord-rpc)
 
-qt_add_executable(ossp
+add_executable(ossp MACOSX_BUNDLE
     main.c
     gui/gui_entry.cpp
-    gui/window.cpp
-    gui/songWidget.cpp
     configHandler.c
     libopensubsonic/crypto.c
     libopensubsonic/httpclient.c
@@ -39,6 +38,18 @@ qt_add_executable(ossp
     external/cJSON_Utils.c
     external/libcurl_uriescape.c
     external/md5.c
+    external/imgui/imgui.cpp
+    external/imgui/imgui_tables.cpp
+    external/imgui/imgui_draw.cpp
+    external/imgui/imgui_widgets.cpp
+    external/imgui/imgui_demo.cpp
+    external/imgui/backends/imgui_impl_sdl2.cpp
+    external/imgui/backends/imgui_impl_opengl2.cpp
 )
 
-target_link_libraries(ossp PRIVATE OpenSSL::SSL OpenSSL::Crypto CURL::libcurl Qt6::Core Qt6::Widgets)
+set_target_properties(ossp PROPERTIES
+    MACOSX_BUNDLE_BUNDLE_NAME "OSSP"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "org.hojuix.ossp"
+)
+
+target_link_libraries(ossp PRIVATE OpenSSL::SSL OpenSSL::Crypto CURL::libcurl SDL2::SDL2 ${OPENGL_LIBRARIES} discord-rpc)

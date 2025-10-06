@@ -1,12 +1,60 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "external/discord-rpc/include/discord_rpc.h"
 #include "gui/gui_entry.hpp"
 #include "libopensubsonic/logger.h"
 #include "libopensubsonic/crypto.h"
 #include "libopensubsonic/httpclient.h"
 #include "libopensubsonic/endpoint_ping.h"
 #include "configHandler.h"
+
+const char* APPID = "1407025303779278980";
+
+
+
+static void handleDiscordReady(const DiscordUser* connectedUser)
+{
+    printf("\nDiscord: connected to user %s#%s - %s\n",
+           connectedUser->username,
+           connectedUser->discriminator,
+           connectedUser->userId);
+}
+
+static void handleDiscordDisconnected(int errcode, const char* message)
+{
+    printf("\nDiscord: disconnected (%d: %s)\n", errcode, message);
+}
+
+static void handleDiscordError(int errcode, const char* message)
+{
+    printf("\nDiscord: error (%d: %s)\n", errcode, message);
+}
+
+
+
+static void discordInit()
+{
+    DiscordEventHandlers handlers;
+    memset(&handlers, 0, sizeof(handlers));
+    handlers.ready = handleDiscordReady;
+    handlers.disconnected = handleDiscordDisconnected;
+    handlers.errored = handleDiscordError;
+    Discord_Initialize(APPID, &handlers, 1, NULL);
+}
+
+static void updatePresence() {
+    char buffer[256];
+    DiscordRichPresence presence;
+    memset(&presence, 0, sizeof(presence));
+    sprintf(buffer, "Idle"); // Change to snprintf
+    presence.details = buffer;
+    presence.activity_type = DISCORD_ACTIVITY_TYPE_LISTENING;
+    Discord_UpdatePresence(&presence);
+}
+
+
+
 
 configHandler_config_t* configObj = NULL;
 int checkConfigFile();
@@ -43,6 +91,10 @@ int main(int argc, char** argv) {
     if (rc != 0) {
         return 1;
     }
+
+    // Launch Discord RPC
+    discordInit();
+    updatePresence();
 
     // Launch QT frontend
     qt_gui_entry(argc, argv);
@@ -113,6 +165,7 @@ int validateConnection() {
         printf("Code %d - %s\n", OSS_ping_struct->errorCode, OSS_ping_struct->errorMessage);
     }
 
+    // NOTE: A little verbose to avoid making another variable to hold error code after freeing structs
     if (!OSS_ping_struct->error) {
         opensubsonic_ping_struct_free(&OSS_ping_struct);
         opensubsonic_httpClient_URL_cleanup(&pingUrl);

@@ -63,7 +63,8 @@ int configHandler_Read(configHandler_config_t** configObj) {
     printf("iOS Container Path: %s\n", config_path);
 #endif // DEBUG
 #else
-    rc = asprintf(&config_path, "config.json");
+    char* root_path = getenv("HOME");
+    rc = asprintf(&config_path, "%s/.config/ossp/config.json", root_path);
 #endif // defined(__APPLE__) && defined(__MACH__) && defined(XCODE)
     if (rc == -1) {
         logger_log_error(__func__, "asprintf() failed (Could not generate config path).");
