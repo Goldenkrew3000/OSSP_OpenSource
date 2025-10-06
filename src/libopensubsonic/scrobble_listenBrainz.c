@@ -7,7 +7,6 @@
 #include "endpoint_getSong.h"
 #include "httpclient.h"
 #include "scrobble_listenBrainz.h"
-#include "../DarwinHttpClient.h"
 
 const char* listenBrainzScrobbleURL = "https://api.listenbrainz.org/1/submit-listens";
 

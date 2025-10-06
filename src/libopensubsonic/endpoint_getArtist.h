@@ -1,6 +1,10 @@
 #ifndef _ENDPOINT_GETARTIST_H
 #define _ENDPOINT_GETARTIST_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 typedef struct {
     char* id;           // Album ID
     char* parent;       // Parent ID
@@ -38,4 +42,8 @@ typedef struct {
 int opensubsonic_getArtist_parse(char* data, opensubsonic_getArtist_struct** getArtistStruct);
 void opensubsonic_getArtist_struct_free(opensubsonic_getArtist_struct** getArtistStruct);
 
-#endif
+#ifdef __cplusplus
+}
+#endif // __cplusplus
+
+#endif // _ENDPOINT_GETARTIST_H

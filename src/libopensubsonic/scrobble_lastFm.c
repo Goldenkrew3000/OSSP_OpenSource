@@ -8,7 +8,6 @@
 #include "../external/md5.h"
 #include "../external/libcurl_uriescape.h"
 #include "../configHandler.h"
-#include "../DarwinHttpClient.h"
 #include "../configHandler.h"
 
 const char* lastFmScrobbleURL = "https://ws.audioscrobbler.com/2.0/";

@@ -1,6 +1,10 @@
 #ifndef _ENDPOINT_GETLYRICSBYSONGID_H
 #define _ENDPOINT_GETLYRICSBYSONGID_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 typedef struct {
     char* data;
     long offset;
@@ -19,4 +23,8 @@ typedef struct {
 int opensubsonic_getLyricsBySongId_parse(char* data, opensubsonic_getLyricsBySongId_struct** getLyricsBySongIdStruct);
 void opensubsonic_getLyricsBySongId_struct_free(opensubsonic_getLyricsBySongId_struct** getLyricsBySongIdStruct);
 
-#endif
+#ifdef __cplusplus
+}
+#endif // __cplusplus
+
+#endif // _ENDPOINT_GETLYRICSBYSONGID_H

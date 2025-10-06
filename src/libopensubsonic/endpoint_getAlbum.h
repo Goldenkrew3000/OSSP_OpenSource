@@ -1,6 +1,10 @@
 #ifndef _ENDPOINT_GETALBUM_H
 #define _ENDPOINT_GETALBUM_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 typedef struct {
     char* id;
     char* parent;
@@ -49,4 +53,8 @@ typedef struct {
 int opensubsonic_getAlbum_parse(char* data, opensubsonic_getAlbum_struct** getAlbumStruct);
 void opensubsonic_getAlbum_struct_free(opensubsonic_getAlbum_struct** getAlbumStruct);
 
-#endif
+#ifdef __cplusplus
+}
+#endif // __cplusplus
+
+#endif // _ENDPOINT_GETALBUM_H

@@ -1,6 +1,10 @@
 #ifndef _ENDPOINT_GETSONG_H
 #define _ENDPOINT_GETSONG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 typedef struct {
     char* status;       // Request status
     int errorCode;      // Request error code (0 if none)
@@ -36,4 +40,8 @@ typedef struct {
 int opensubsonic_getSong_parse(char* data, opensubsonic_getSong_struct** getSongStruct);
 void opensubsonic_getSong_struct_free(opensubsonic_getSong_struct** getSongStruct);
 
-#endif
+#ifdef __cplusplus
+}
+#endif // __cplusplus
+
+#endif // _ENDPOINT_GETSONG_H

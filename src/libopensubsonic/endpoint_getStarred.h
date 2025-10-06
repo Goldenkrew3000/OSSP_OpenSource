@@ -1,6 +1,10 @@
 #ifndef _ENDPOINT_GETSTARRED_H
 #define _ENDPOINT_GETSTARRED_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 typedef struct {
     char* id;
     char* name;
@@ -56,7 +60,7 @@ typedef struct {
 typedef struct {
     char* status;
     int errorCode;
-    char* errorMessage;
+char* errorMessage;
     int artistCount;
     int albumCount;
     int songCount;
@@ -68,4 +72,8 @@ typedef struct {
 int opensubsonic_getStarred_parse(char* data, opensubsonic_getStarred_struct** getStarredStruct);
 void opensubsonic_getStarred_struct_free(opensubsonic_getStarred_struct** getStarredStruct);
 
-#endif
+#ifdef __cplusplus
+}
+#endif // __cplusplus
+
+#endif // _ENDPOINT_GETSTARRED_H

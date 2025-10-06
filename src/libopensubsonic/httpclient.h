@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 #define SCROBBLER_LISTENBRAINZ 101
 #define SCROBBLER_LASTFM 102
 #define HTTP_METHOD_GET 201
@@ -72,4 +76,8 @@ typedef struct {
 
 int opensubsonic_getAlbum(const char* protocol_ptr, const char* server_ptr, const char* user_ptr, char* login_token_ptr, char* login_salt_ptr, const char* opensubsonic_version_ptr, const char* client_name_ptr, char* id, char** response);
 
-#endif
+#ifdef __cplusplus
+}
+#endif // __cplusplus
+
+#endif // _HTTPCLIENT_H

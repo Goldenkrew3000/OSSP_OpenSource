@@ -2,6 +2,10 @@
 #define _ENDPOINT_GETPLAYLIST_H
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 typedef struct {
     char* id;
     char* parent;
@@ -46,4 +50,8 @@ typedef struct {
 int opensubsonic_getPlaylist_parse(char* data, opensubsonic_getPlaylist_struct** getPlaylistStruct);
 void opensubsonic_getPlaylist_struct_free(opensubsonic_getPlaylist_struct** getPlaylistStruct);
 
-#endif
+#ifdef __cplusplus
+}
+#endif // __cplusplus
+
+#endif // _ENDPOINT_GETPLAYLIST_H
