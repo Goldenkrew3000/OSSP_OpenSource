@@ -55,6 +55,7 @@ typedef struct {
     char* lv2_parax32_quality_right;
     char* lv2_parax32_frequency_left;
     char* lv2_parax32_frequency_right;
+    char* lv2_reverb_filter_name;       // LV2 Calf Reeverb LV2 Name
 } configHandler_config_t;
 
 int configHandler_Read(configHandler_config_t** config);

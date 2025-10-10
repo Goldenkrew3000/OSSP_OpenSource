@@ -57,6 +57,7 @@ int configHandler_Read(configHandler_config_t** configObj) {
     (*configObj)->lv2_parax32_quality_right = NULL;
     (*configObj)->lv2_parax32_frequency_left = NULL;
     (*configObj)->lv2_parax32_frequency_right = NULL;
+    (*configObj)->lv2_reverb_filter_name = NULL;
     
     // Set internal configuration values
     (*configObj)->internal_opensubsonic_version = strdup("1.8.0");
@@ -424,6 +425,19 @@ int configHandler_Read(configHandler_config_t** configObj) {
         (*configObj)->lv2_parax32_frequency_right = strdup(lsp_para_x32_lr_frequency_right->valuestring);
     }
 
+    // Make an object from calf_reverb
+    cJSON* calf_reverb_root = cJSON_GetObjectItemCaseSensitive(lv2_root, "calf_reverb");
+    if (calf_reverb_root == NULL) {
+        logger_log_error(__func__, "Error parsing JSON - calf_reverb does not exist.");
+        cJSON_Delete(root);
+        return 1;
+    }
+
+    cJSON* calf_reverb_filter_name = cJSON_GetObjectItemCaseSensitive(lv2_root, "filter_name");
+    if (cJSON_IsString(calf_reverb_filter_name) && calf_reverb_filter_name->valuestring != NULL) {
+        (*configObj)->lv2_reverb_filter_name = strdup(calf_reverb_filter_name->valuestring);
+    }
+
     cJSON_Delete(root);
     logger_log_general(__func__, "Successfully read configuration file.");
     return 0;
@@ -445,5 +459,15 @@ void configHandler_Free(configHandler_config_t** configObj) {
     if ((*configObj)->lastfm_api_secret != NULL) { free((*configObj)->lastfm_api_secret); }
     if ((*configObj)->lastfm_api_session_key != NULL) { free((*configObj)->lastfm_api_session_key); }
     if ((*configObj)->audio_equalizer_graph != NULL) { free((*configObj)->audio_equalizer_graph); }
+    if ((*configObj)->lv2_parax32_filter_name != NULL) { free((*configObj)->lv2_parax32_filter_name); }
+    if ((*configObj)->lv2_parax32_filter_type_left != NULL) { free((*configObj)->lv2_parax32_filter_type_left); }
+    if ((*configObj)->lv2_parax32_filter_type_right != NULL) { free((*configObj)->lv2_parax32_filter_type_right); }
+    if ((*configObj)->lv2_parax32_gain_left != NULL) { free((*configObj)->lv2_parax32_gain_left); }
+    if ((*configObj)->lv2_parax32_gain_right != NULL) { free((*configObj)->lv2_parax32_gain_right); }
+    if ((*configObj)->lv2_parax32_quality_left != NULL) { free((*configObj)->lv2_parax32_quality_left); }
+    if ((*configObj)->lv2_parax32_quality_right != NULL) { free((*configObj)->lv2_parax32_quality_right); }
+    if ((*configObj)->lv2_parax32_frequency_left != NULL) { free((*configObj)->lv2_parax32_frequency_left); }
+    if ((*configObj)->lv2_parax32_frequency_right != NULL) { free((*configObj)->lv2_parax32_frequency_right); }
+    if ((*configObj)->lv2_reverb_filter_name != NULL) { free((*configObj)->lv2_reverb_filter_name); }
     if (*configObj != NULL) { free(*configObj); }
 }

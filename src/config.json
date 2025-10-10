@@ -1,19 +1,23 @@
 {
     "opensubsonic_server": {
         "protocol": "https",
-        "server": "server.com",
-        "username": "",
+        "server": "aaa.bbb.com",
+        "username": "user",
         "password": ""
     },
     "scrobbler": {
         "listenbrainz_enable": true,
         "listenbrainz_token": "",
         "lastfm_enable": true,
-        "lastfm_username": "",
+        "lastfm_username": "aarch64",
         "lastfm_password": "",
         "lastfm_api_key": "",
         "lastfm_api_secret": "",
         "lastfm_session_key": ""
+    },
+    "discord_rpc": {
+        "enable": true,
+        "method": 0
     },
     "audio": {
         "equalizer": {
@@ -72,6 +76,22 @@
         "reverb": {
             "enable": true,
             "wetDryMix": 15.0
+        },
+        "lv2": {
+            "lsp_para_x32_lr": {
+                "filter_name": "lsp-plug-in-plugins-lv2-para-equalizer-x32-lr",
+                "filter_type_left": "ftl-",
+                "filter_type_right": "ftr-",
+                "gain_left": "gl-",
+                "gain_right": "gr-",
+                "quality_left": "ql-",
+                "quality_right": "qr-",
+                "frequency_left": "fl-",
+                "frequency_right": "fr-"
+            },
+            "calf_reverb": {
+                "filter_name": "calf-sourceforge-net-plugins-Reverb"
+            }
         }
     }
 }
