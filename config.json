@@ -2,14 +2,14 @@
     "opensubsonic_server": {
         "protocol": "https",
         "server": "aaa.bbb.com",
-        "username": "goldenkrew3000",
+        "username": "user",
         "password": ""
     },
     "scrobbler": {
         "listenbrainz_enable": true,
         "listenbrainz_token": "",
         "lastfm_enable": true,
-        "lastfm_username": "",
+        "lastfm_username": "aarch64",
         "lastfm_password": "",
         "lastfm_api_key": "",
         "lastfm_api_secret": "",
@@ -88,6 +88,9 @@
                 "quality_right": "qr-",
                 "frequency_left": "fl-",
                 "frequency_right": "fr-"
+            },
+            "calf_reverb": {
+                "filter_name": "calf-sourceforge-net-plugins-Reverb"
             }
         }
     }
