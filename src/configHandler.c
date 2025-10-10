@@ -433,7 +433,7 @@ int configHandler_Read(configHandler_config_t** configObj) {
         return 1;
     }
 
-    cJSON* calf_reverb_filter_name = cJSON_GetObjectItemCaseSensitive(lv2_root, "filter_name");
+    cJSON* calf_reverb_filter_name = cJSON_GetObjectItemCaseSensitive(calf_reverb_root, "filter_name");
     if (cJSON_IsString(calf_reverb_filter_name) && calf_reverb_filter_name->valuestring != NULL) {
         (*configObj)->lv2_reverb_filter_name = strdup(calf_reverb_filter_name->valuestring);
     }

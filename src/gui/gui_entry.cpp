@@ -8,6 +8,7 @@
 #include "../configHandler.h"
 #include "../libopensubsonic/httpclient.h"
 #include "../libopensubsonic/endpoint_getStarred.h"
+#include "../player/player.h"
 
 extern configHandler_config_t* configObj;
 bool bLikedSongsShow = false;
@@ -166,6 +167,7 @@ void showLikedSongs() {
     if (selectedSong != -1) {
         printf("Song: %s (%s)\n", starredStruct->songs[selectedSong].title,
             starredStruct->songs[selectedSong].id);
+        OSSPlayer_QueueAppend(starredStruct->songs[selectedSong].id);
         selectedSong = -1;
     }
 

@@ -1,0 +1,271 @@
+/*
+ * OpenSubsonicPlayer
+ * Goldenkrew3000 2025
+ * License: AGPL-3.0
+ */
+
+#include <stdio.h>
+#include <gst/gst.h>
+#include <math.h>
+#include <stdbool.h>
+#include <pthread.h>
+#include "../configHandler.h"
+#include "../libopensubsonic/logger.h"
+#include "../libopensubsonic/endpoint_getSong.h"
+#include "../libopensubsonic/httpclient.h"
+#include "playQueue.hpp"
+#include "player.h"
+
+#include <unistd.h> // For worse sleep TODO
+
+extern configHandler_config_t* configObj;
+static int rc = 0;
+GstElement *pipeline, *playbin, *filter_bin, *conv_in, *conv_out, *in_volume, *equalizer, *pitch, *reverb;
+GstPad *sink_pad, *src_pad;
+GstBus* bus;
+guint bus_watch_id;
+GMainLoop* loop;
+bool isPlaying = false;
+
+static gboolean gst_bus_call(GstBus* bus, GstMessage* message, gpointer data) {
+    printf("BUSCALL\n");
+    GMainLoop* loop = (GMainLoop*)data;
+
+    switch (GST_MESSAGE_TYPE(message)) {
+        case GST_MESSAGE_EOS:
+            printf("End of stream\n");
+            gst_element_set_state(pipeline, GST_STATE_NULL);
+            isPlaying = false;
+            break;
+        case GST_MESSAGE_ERROR:
+            printf("Error\n");
+        default:
+            printf("Unknown\n");
+            break;
+    }
+
+    return TRUE;
+}
+
+void* OSSPlayer_GstMainLoop(void*) {
+    printf("GstMainLoop running\n");
+    g_main_loop_run(loop);
+}
+
+void* OSSPlayer_ThrdInit(void*) {
+    // Player init function for pthread entry
+    printf("Player thread running.\n");
+    OSSPlayer_GstInit();
+
+    pthread_t pthr_gst;
+    pthread_create(&pthr_gst, NULL, OSSPlayer_GstMainLoop, NULL);
+
+    // Poll play queue for new items to play
+    while (true) { // TODO use global bool instead
+        if (internal_OSSPQ_GetItemCount() != 0 && isPlaying == false) {
+            printf("IS VALID\n");
+            // Player is not playing and a song is in the song queue
+            char* id = OSSPlayer_QueuePopFront();
+            if (id == NULL) {
+                printf("FUCK\n");
+                // TODO: this
+            }
+
+            //opensubsonic_httpClient_URL_t* song_url = malloc(sizeof(opensubsonic_httpClient_URL_t));
+            //opensubsonic_httpClient_URL_prepare(&song_url);
+            //song_url->endpoint = OPENSUBSONIC_ENDPOINT_GETSONG;
+            //song_url->id = id;
+            //opensubsonic_httpClient_formUrl(&song_url);
+
+            opensubsonic_httpClient_URL_t* stream_url = malloc(sizeof(opensubsonic_httpClient_URL_t));
+            opensubsonic_httpClient_URL_prepare(&stream_url);
+            stream_url->endpoint = OPENSUBSONIC_ENDPOINT_STREAM;
+            stream_url->id = id;
+            opensubsonic_httpClient_formUrl(&stream_url);
+
+            g_object_set(playbin, "uri", stream_url->formedUrl, NULL);
+            isPlaying = true;
+            gst_element_set_state(pipeline, GST_STATE_PLAYING);
+        }
+        printf("Sleeping\n");
+        usleep(200 * 1000); // Use futex and signals instead of this TODO
+    }
+}
+
+int OSSPlayer_GstInit() {
+    printf("[OSSP] Initializing Gstreamer...\n");
+
+    // Initialize gstreamer
+    gst_init(NULL, NULL);
+    loop = g_main_loop_new(NULL, FALSE);
+
+    // Create base pipeline elements
+    pipeline = gst_pipeline_new("pipeline");
+    playbin = gst_element_factory_make("playbin3", "player");
+    // TODO: Fix erroring
+    if (!pipeline) {
+        logger_log_error(__func__, "Could not initialize pipeline.");
+    }
+    if (!playbin) {
+        logger_log_error(__func__, "Could not initialize playbin3");
+    }
+
+    // Add message handler
+    bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
+    // TODO: Check bus is made properly
+    bus_watch_id = gst_bus_add_watch(bus, gst_bus_call, loop);
+    gst_object_unref(bus);
+
+
+    filter_bin = gst_bin_new("filter-bin");
+    conv_in = gst_element_factory_make("audioconvert", "convert-in");
+    conv_out = gst_element_factory_make("audioconvert", "convert-out");
+    // TODO: Check creation
+
+    // Create configuration defined elements
+    in_volume = gst_element_factory_make("volume", "in-volume");
+    if (configObj->audio_equalizer_enable) {
+        // LSP Para x32 LR Equalizer
+        equalizer = gst_element_factory_make(configObj->lv2_parax32_filter_name, "equalizer");
+    }
+    if (configObj->audio_pitch_enable) {
+        // Soundtouch Pitch
+        pitch = gst_element_factory_make("pitch", "pitch");
+    }
+    if (configObj->audio_reverb_enable) {
+        // Calf Studio Plugins Reverb
+        reverb = gst_element_factory_make(configObj->lv2_reverb_filter_name, "reverb");
+    }
+    // TODO: Make better error messages for here, and exit out early
+    if (!equalizer) {
+        logger_log_error(__func__, "Could not initialize equalizer.");
+    }
+    if (!pitch) {
+        logger_log_error(__func__, "Could not initialize pitch.");
+    }
+    if (!reverb) {
+        logger_log_error(__func__, "Could not initialize reverb.");
+    }
+
+    // Add and link elements to the filter bin
+    // TODO: Check creation and dynamic as per config
+    gst_bin_add_many(GST_BIN(filter_bin), conv_in, in_volume, equalizer, conv_out, NULL);
+    gst_element_link_many(conv_in, in_volume, equalizer, conv_out, NULL);
+    sink_pad = gst_element_get_static_pad(conv_in, "sink");
+    src_pad = gst_element_get_static_pad(conv_out, "src");
+    gst_element_add_pad(filter_bin, gst_ghost_pad_new("sink", sink_pad));
+    gst_element_add_pad(filter_bin, gst_ghost_pad_new("src", src_pad));
+    gst_object_unref(sink_pad);
+    gst_object_unref(src_pad);
+
+    // TEST - Setup playbin
+    g_object_set(playbin, "audio-filter", filter_bin, NULL);
+
+    // 000
+    gst_bin_add(GST_BIN(pipeline), playbin);
+
+    // Initialize in-volume
+    g_object_set(in_volume, "volume", 0.175, NULL);
+    
+    // Initialize equalizer
+    if (configObj->audio_equalizer_enable) {
+        printf("Initializing equalizer...\n");
+
+        // Dynamically append settings to the equalizer to match the config file
+        for (int i = 0; i < configObj->audio_equalizer_graphCount; i++) {
+            char* ftl_name = NULL;
+            char* ftr_name = NULL;
+            char* gl_name = NULL;
+            char* gr_name = NULL;
+            char* ql_name = NULL;
+            char* qr_name = NULL;
+            char* fl_name = NULL;
+            char* fr_name = NULL;
+
+            asprintf(&ftl_name, "%s%d", configObj->lv2_parax32_filter_type_left, i);
+            asprintf(&ftr_name, "%s%d", configObj->lv2_parax32_filter_type_right, i);
+            asprintf(&gl_name, "%s%d", configObj->lv2_parax32_gain_left, i);
+            asprintf(&gr_name, "%s%d", configObj->lv2_parax32_gain_right, i);
+            asprintf(&ql_name, "%s%d", configObj->lv2_parax32_quality_left, i);
+            asprintf(&qr_name, "%s%d", configObj->lv2_parax32_quality_right, i);
+            asprintf(&fl_name, "%s%d", configObj->lv2_parax32_frequency_left, i);
+            asprintf(&fr_name, "%s%d", configObj->lv2_parax32_frequency_right, i);
+
+            g_object_set(equalizer, ftl_name, 1, NULL);
+            g_object_set(equalizer, ftr_name, 1, NULL);
+
+            // NOTE: Making an extra variable here to avoid nesting a function within a function
+            float gain = (float)configObj->audio_equalizer_graph[i].gain;
+            gain = OSSPlayer_DbLinMul(gain);
+            g_object_set(equalizer, gl_name, gain, NULL);
+            g_object_set(equalizer, gr_name, gain, NULL);
+            
+            g_object_set(equalizer, ql_name, 4.36, NULL);
+            g_object_set(equalizer, qr_name, 4.36, NULL);
+
+            // NOTE: Same function nesting mitigation here
+            if (configObj->audio_equalizer_followPitch) {
+                // Adjust equalizer frequency to match pitch adjustment
+                // TODO: Should I also check if pitch is enabled, or just if pitch follow is enabled??
+                // TODO: Also check that freq following is working properly as per swift version
+                float freq = (float)configObj->audio_equalizer_graph[i].frequency;
+                float semitone = (float)configObj->audio_pitch_cents / 100.0;
+                freq = OSSPlayer_PitchFollow(freq, semitone);
+                g_object_set(equalizer, fl_name, freq, NULL);
+                g_object_set(equalizer, fr_name, freq, NULL);
+            } else {
+                g_object_set(equalizer, fl_name, (float)configObj->audio_equalizer_graph[i].frequency, NULL);
+                g_object_set(equalizer, fr_name, (float)configObj->audio_equalizer_graph[i].frequency, NULL);
+            }
+
+            free(ftl_name);
+            free(ftr_name);
+            free(gl_name);
+            free(gr_name);
+            free(ql_name);
+            free(qr_name);
+            free(fl_name);
+            free(fr_name);
+        }
+
+        g_object_set(equalizer, "enabled", true, NULL);
+    }
+
+    //g_main_loop_run(loop);
+
+}
+
+int OSSPlayer_GstDeInit() {
+    //
+}
+
+/*
+ * Player Queue Control Functions
+ */
+int OSSPlayer_QueueAppend(char* id) {
+    // Call to C++ function
+    internal_OSSPQ_AppendToEnd(id);
+}
+
+char* OSSPlayer_QueuePopFront() {
+    // Call to C++ function
+    char* id = internal_OSSPQ_PopFromFront();
+    if (id == NULL) {
+        // Queue is empty TODO
+        printf("FUCKFUCKFUCK\n");
+    }
+    return id;
+}
+
+/*
+ * Utility Functions
+ */
+float OSSPlayer_DbLinMul(float db) {
+    // Convert dB to Linear Multiplier
+    return pow(10.0, db / 20.0);
+}
+
+float OSSPlayer_PitchFollow(float freq, float semitone) {
+    // Calculate new EQ frequency from semitone adjustment
+    return freq * pow(2.0, semitone / 12.0);
+}

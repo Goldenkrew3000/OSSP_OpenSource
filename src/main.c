@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 #include "external/discord-rpc/include/discord_rpc.h"
 #include "gui/gui_entry.hpp"
 #include "libopensubsonic/logger.h"
@@ -8,6 +9,7 @@
 #include "libopensubsonic/httpclient.h"
 #include "libopensubsonic/endpoint_ping.h"
 #include "configHandler.h"
+#include "player/player.h"
 
 const char* APPID = "1407025303779278980";
 
@@ -91,6 +93,10 @@ int main(int argc, char** argv) {
     if (rc != 0) {
         return 1;
     }
+
+    // Connection attempt was successful, initialize player
+    pthread_t pthr_player;
+    pthread_create(&pthr_player, NULL, OSSPlayer_ThrdInit, NULL);
 
     // Launch Discord RPC
     discordInit();
