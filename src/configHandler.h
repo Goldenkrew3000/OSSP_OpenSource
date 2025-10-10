@@ -44,6 +44,17 @@ typedef struct {
     double audio_pitch_rate;
     bool audio_reverb_enable;
     double audio_reverb_wetDryMix;      // Reverb Wet/Dry Mix Percent
+
+    // LV2 Audio Settings
+    char* lv2_parax32_filter_name;      // LV2 LSP Para Equalizer x32 LR LV2 Name
+    char* lv2_parax32_filter_type_left; // LV2 LSP Para Equalizer x32 LR Filter type left name
+    char* lv2_parax32_filter_type_right;
+    char* lv2_parax32_gain_left;
+    char* lv2_parax32_gain_right;
+    char* lv2_parax32_quality_left;
+    char* lv2_parax32_quality_right;
+    char* lv2_parax32_frequency_left;
+    char* lv2_parax32_frequency_right;
 } configHandler_config_t;
 
 int configHandler_Read(configHandler_config_t** config);

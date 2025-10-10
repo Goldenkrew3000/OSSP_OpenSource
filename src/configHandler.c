@@ -48,6 +48,15 @@ int configHandler_Read(configHandler_config_t** configObj) {
     (*configObj)->audio_pitch_rate = 0.00;
     (*configObj)->audio_reverb_enable = false;
     (*configObj)->audio_reverb_wetDryMix = 0.00;
+    (*configObj)->lv2_parax32_filter_name = NULL;
+    (*configObj)->lv2_parax32_filter_type_left = NULL;
+    (*configObj)->lv2_parax32_filter_type_right = NULL;
+    (*configObj)->lv2_parax32_gain_left = NULL;
+    (*configObj)->lv2_parax32_gain_right = NULL;
+    (*configObj)->lv2_parax32_quality_left = NULL;
+    (*configObj)->lv2_parax32_quality_right = NULL;
+    (*configObj)->lv2_parax32_frequency_left = NULL;
+    (*configObj)->lv2_parax32_frequency_right = NULL;
     
     // Set internal configuration values
     (*configObj)->internal_opensubsonic_version = strdup("1.8.0");
@@ -353,7 +362,68 @@ int configHandler_Read(configHandler_config_t** configObj) {
     if (cJSON_IsNumber(audio_reverb_wetDryMix)) {
         (*configObj)->audio_reverb_wetDryMix = audio_reverb_wetDryMix->valuedouble;
     }
-    
+
+    // Make an object from lv2
+    cJSON* lv2_root = cJSON_GetObjectItemCaseSensitive(audio_root, "lv2");
+    if (lv2_root == NULL) {
+        logger_log_error(__func__, "Error parsing JSON - lv2 does not exist.");
+        cJSON_Delete(root);
+        return 1;
+    }
+
+    // Make an object from lsp_para_x32_lr
+    cJSON* lsp_para_x32_lr_root = cJSON_GetObjectItemCaseSensitive(lv2_root, "lsp_para_x32_lr");
+    if (lsp_para_x32_lr_root == NULL) {
+        logger_log_error(__func__, "Error parsing JSON - lsp_para_x32_lr does not exist.");
+        cJSON_Delete(root);
+        return 1;
+    }
+
+    cJSON* lsp_para_x32_lr_filter_name = cJSON_GetObjectItemCaseSensitive(lsp_para_x32_lr_root, "filter_name");
+    if (cJSON_IsString(lsp_para_x32_lr_filter_name) && lsp_para_x32_lr_filter_name->valuestring != NULL) {
+        (*configObj)->lv2_parax32_filter_name = strdup(lsp_para_x32_lr_filter_name->valuestring);
+    }
+
+    cJSON* lsp_para_x32_lr_filter_type_left = cJSON_GetObjectItemCaseSensitive(lsp_para_x32_lr_root, "filter_type_left");
+    if (cJSON_IsString(lsp_para_x32_lr_filter_type_left) && lsp_para_x32_lr_filter_type_left->valuestring != NULL) {
+        (*configObj)->lv2_parax32_filter_type_left = strdup(lsp_para_x32_lr_filter_type_left->valuestring);
+    }
+
+    cJSON* lsp_para_x32_lr_filter_type_right = cJSON_GetObjectItemCaseSensitive(lsp_para_x32_lr_root, "filter_type_right");
+    if (cJSON_IsString(lsp_para_x32_lr_filter_type_right) && lsp_para_x32_lr_filter_type_right->valuestring != NULL) {
+        (*configObj)->lv2_parax32_filter_type_right = strdup(lsp_para_x32_lr_filter_type_right->valuestring);
+    }
+
+    cJSON* lsp_para_x32_lr_gain_left = cJSON_GetObjectItemCaseSensitive(lsp_para_x32_lr_root, "gain_left");
+    if (cJSON_IsString(lsp_para_x32_lr_gain_left) && lsp_para_x32_lr_gain_left->valuestring != NULL) {
+        (*configObj)->lv2_parax32_gain_left = strdup(lsp_para_x32_lr_gain_left->valuestring);
+    }
+
+    cJSON* lsp_para_x32_lr_gain_right = cJSON_GetObjectItemCaseSensitive(lsp_para_x32_lr_root, "gain_right");
+    if (cJSON_IsString(lsp_para_x32_lr_gain_right) && lsp_para_x32_lr_gain_right->valuestring != NULL) {
+        (*configObj)->lv2_parax32_gain_right = strdup(lsp_para_x32_lr_gain_right->valuestring);
+    }
+
+    cJSON* lsp_para_x32_lr_quality_left = cJSON_GetObjectItemCaseSensitive(lsp_para_x32_lr_root, "quality_left");
+    if (cJSON_IsString(lsp_para_x32_lr_quality_left) && lsp_para_x32_lr_quality_left->valuestring != NULL) {
+        (*configObj)->lv2_parax32_quality_left = strdup(lsp_para_x32_lr_quality_left->valuestring);
+    }
+
+    cJSON* lsp_para_x32_lr_quality_right = cJSON_GetObjectItemCaseSensitive(lsp_para_x32_lr_root, "quality_right");
+    if (cJSON_IsString(lsp_para_x32_lr_quality_right) && lsp_para_x32_lr_quality_right->valuestring != NULL) {
+        (*configObj)->lv2_parax32_quality_right = strdup(lsp_para_x32_lr_quality_right->valuestring);
+    }
+
+    cJSON* lsp_para_x32_lr_frequency_left = cJSON_GetObjectItemCaseSensitive(lsp_para_x32_lr_root, "frequency_left");
+    if (cJSON_IsString(lsp_para_x32_lr_frequency_left) && lsp_para_x32_lr_frequency_left->valuestring != NULL) {
+        (*configObj)->lv2_parax32_frequency_left = strdup(lsp_para_x32_lr_frequency_left->valuestring);
+    }
+
+    cJSON* lsp_para_x32_lr_frequency_right = cJSON_GetObjectItemCaseSensitive(lsp_para_x32_lr_root, "frequency_right");
+    if (cJSON_IsString(lsp_para_x32_lr_frequency_right) && lsp_para_x32_lr_frequency_right->valuestring != NULL) {
+        (*configObj)->lv2_parax32_frequency_right = strdup(lsp_para_x32_lr_frequency_right->valuestring);
+    }
+
     cJSON_Delete(root);
     logger_log_general(__func__, "Successfully read configuration file.");
     return 0;
