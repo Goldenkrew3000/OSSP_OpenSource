@@ -1,0 +1,94 @@
+{
+    "opensubsonic_server": {
+        "protocol": "https",
+        "server": "aaa.bbb.com",
+        "username": "goldenkrew3000",
+        "password": ""
+    },
+    "scrobbler": {
+        "listenbrainz_enable": true,
+        "listenbrainz_token": "",
+        "lastfm_enable": true,
+        "lastfm_username": "",
+        "lastfm_password": "",
+        "lastfm_api_key": "",
+        "lastfm_api_secret": "",
+        "lastfm_session_key": ""
+    },
+    "discord_rpc": {
+        "enable": true,
+        "method": 0
+    },
+    "audio": {
+        "equalizer": {
+            "enable": true,
+            "followPitch": true,
+            "graph": [
+                {
+                    "bandwidth": 0.5,
+                    "frequency": 22,
+                    "gain": 17,
+                    "bypass": false
+                },
+                {
+                    "bandwidth": 0.5,
+                    "frequency": 28,
+                    "gain": 17,
+                    "bypass": false
+                },
+                {
+                    "bandwidth": 0.5,
+                    "frequency": 35,
+                    "gain": 8.6,
+                    "bypass": false
+                },
+                {
+                    "bandwidth": 0.5,
+                    "frequency": 43,
+                    "gain": 5.4,
+                    "bypass": false
+                },
+                {
+                    "bandwidth": 0.5,
+                    "frequency": 53,
+                    "gain": 12.3,
+                    "bypass": false
+                },
+                {
+                    "bandwidth": 0.5,
+                    "frequency": 66,
+                    "gain": 5.1,
+                    "bypass": false
+                },
+                {
+                    "bandwidth": 0.5,
+                    "frequency": 82,
+                    "gain": 0,
+                    "bypass": false
+                }
+            ]
+        },
+        "pitch": {
+            "enable": true,
+            "cents": -270.0,
+            "rate": 1.0
+        },
+        "reverb": {
+            "enable": true,
+            "wetDryMix": 15.0
+        },
+        "lv2": {
+            "lsp_para_x32_lr": {
+                "filter_name": "lsp-plug-in-plugins-lv2-para-equalizer-x32-lr",
+                "filter_type_left": "ftl-",
+                "filter_type_right": "ftr-",
+                "gain_left": "gl-",
+                "gain_right": "gr-",
+                "quality_left": "ql-",
+                "quality_right": "qr-",
+                "frequency_left": "fl-",
+                "frequency_right": "fr-"
+            }
+        }
+    }
+}
