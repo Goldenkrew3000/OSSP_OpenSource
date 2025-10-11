@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-#include "external/discord-rpc/include/discord_rpc.h"
 #include "gui/gui_entry.hpp"
 #include "libopensubsonic/logger.h"
 #include "libopensubsonic/crypto.h"
@@ -10,53 +9,7 @@
 #include "libopensubsonic/endpoint_ping.h"
 #include "configHandler.h"
 #include "player/player.h"
-
-const char* APPID = "1407025303779278980";
-
-
-
-static void handleDiscordReady(const DiscordUser* connectedUser)
-{
-    printf("\nDiscord: connected to user %s#%s - %s\n",
-           connectedUser->username,
-           connectedUser->discriminator,
-           connectedUser->userId);
-}
-
-static void handleDiscordDisconnected(int errcode, const char* message)
-{
-    printf("\nDiscord: disconnected (%d: %s)\n", errcode, message);
-}
-
-static void handleDiscordError(int errcode, const char* message)
-{
-    printf("\nDiscord: error (%d: %s)\n", errcode, message);
-}
-
-
-
-static void discordInit()
-{
-    DiscordEventHandlers handlers;
-    memset(&handlers, 0, sizeof(handlers));
-    handlers.ready = handleDiscordReady;
-    handlers.disconnected = handleDiscordDisconnected;
-    handlers.errored = handleDiscordError;
-    Discord_Initialize(APPID, &handlers, 1, NULL);
-}
-
-static void updatePresence() {
-    char buffer[256];
-    DiscordRichPresence presence;
-    memset(&presence, 0, sizeof(presence));
-    sprintf(buffer, "Idle"); // Change to snprintf
-    presence.details = buffer;
-    presence.activity_type = DISCORD_ACTIVITY_TYPE_LISTENING;
-    Discord_UpdatePresence(&presence);
-}
-
-
-
+#include "discordrpc.h"
 
 configHandler_config_t* configObj = NULL;
 int checkConfigFile();
@@ -99,8 +52,12 @@ int main(int argc, char** argv) {
     pthread_create(&pthr_player, NULL, OSSPlayer_ThrdInit, NULL);
 
     // Launch Discord RPC
-    discordInit();
-    updatePresence();
+    discordrpc_data* discordrpc = NULL;
+    discordrpc_struct_init(&discordrpc);
+    discordrpc->state = DISCORDRPC_STATE_IDLE;
+    discordrpc_init();
+    discordrpc_update(&discordrpc);
+    discordrpc_struct_deinit(&discordrpc);
 
     // Launch QT frontend
     qt_gui_entry(argc, argv);
