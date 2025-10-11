@@ -67,8 +67,6 @@ void discordrpc_init() {
     discordrpc_osString = discordrpc_getOS();
 }
 
-#include <stdbool.h>
-
 void discordrpc_update(discordrpc_data** discordrpc_struct) {
     printf("[DiscordRPC] Updating...\n");
     DiscordRichPresence presence;

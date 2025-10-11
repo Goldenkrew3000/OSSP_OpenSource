@@ -12,7 +12,9 @@
 
 extern configHandler_config_t* configObj;
 bool bLikedSongsShow = false;
+bool bAudioSettingsShow = false;
 void showLikedSongs();
+void showAudioSettings();
 
 int qt_gui_entry(int argc, char** argv) {
     // Initialize SDL
@@ -89,11 +91,21 @@ int qt_gui_entry(int argc, char** argv) {
                 bLikedSongsShow = true;
             }
 
+            ImGui::SameLine();
+
+            if (ImGui::Button("Audio Settings")) {
+                bAudioSettingsShow = true;
+            }
+
             ImGui::End();
         }
 
         if (bLikedSongsShow) {
             showLikedSongs();
+        }
+
+        if (bAudioSettingsShow) {
+            showAudioSettings();
         }
 
         // Render
@@ -155,13 +167,15 @@ void showLikedSongs() {
     }
 
     static int selectedSong = -1;
-    if (ImGui::BeginChild("Liked Songs", ImVec2(0, 200), ImGuiChildFlags_Border)) {
-        for (int i = 0; i < starredStruct->songCount; i++) {
-            if (ImGui::Selectable(starredStruct->songs[i].title, selectedSong == i)) {
-                selectedSong = i;
+    if (haveLikedSongsInfo) {
+        if (ImGui::BeginChild("Liked Songs", ImVec2(0, 200), ImGuiChildFlags_Border)) {
+            for (int i = 0; i < starredStruct->songCount; i++) {
+                if (ImGui::Selectable(starredStruct->songs[i].title, selectedSong == i)) {
+                    selectedSong = i;
+                }
             }
-        }
         ImGui::EndChild();
+        }
     }
 
     if (selectedSong != -1) {
@@ -169,6 +183,25 @@ void showLikedSongs() {
             starredStruct->songs[selectedSong].id);
         OSSPlayer_QueueAppend(starredStruct->songs[selectedSong].id);
         selectedSong = -1;
+    }
+
+    ImGui::End();
+}
+
+float in_volume_val = 0;
+bool hasInVolumeFirstRun = false;
+void showAudioSettings() {
+    ImGui::Begin("Audio Settings");
+
+    if (!hasInVolumeFirstRun) {
+        in_volume_val = OSSPlayer_GstECont_InVolume_Get();
+        hasInVolumeFirstRun = true;
+    }
+
+    // Idk what that field is, styling?, Size, Storage, Low, High
+    if (ImGui::VSliderFloat("##v", ImVec2(35, 160), &in_volume_val, 0.0f, 1.0f)) {
+        // Data has changed
+        OSSPlayer_GstECont_InVolume_set(in_volume_val);
     }
 
     ImGui::End();

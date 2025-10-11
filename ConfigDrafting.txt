@@ -1,0 +1,27 @@
+Opensubsonic Server Settings:
+
+Protocol ('protocol') - Really it's either 'http' or 'https'
+Server ('server') - The Opensubsonic server address, examples:
+    - 'server.com'
+    - 'music.server.com'
+    - 'music.server.com:4533'
+    - '192.168.1.5:8080'
+'protocol' and 'server' are used to form the URL as 'protocol://server'
+Username ('username') - Your Opensubsonic username
+Password ('password') - Your Opensubsonic password
+
+Scrobbler Settings:
+TODO
+
+Discord RPC Settings:
+Enable ('enable') - 'true' to enable Discord RPC or 'false' to disable it
+Method ('method'):
+    - Method '0' is the official local Discord RPC method, local application to local discord client
+    - Method '1' is a VERY buggy and in-development RPC method that uses a client-server model
+                 to allow Discord RPC from a mobile device securely
+Show System Details ('showSystemDetails') - 'true' or 'false'
+    - Want to show off / Got bragging rights on your _unique_ system?? Well this is perfect for you!
+      Setting this to 'true' shows the details of the operating system that OSSP is running on.
+      Example: 'on Linux x86_64 6.17.1-arch1-1' will be shown in the RPC dialog
+      Go on, don't be shy, show everyone you somehow have Discord and OSSP running on fucking s390x!!!
+    - Setting this to 'false' will simply instead show what playlist you are playing.

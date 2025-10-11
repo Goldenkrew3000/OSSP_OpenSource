@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include "../configHandler.h"
+#include "../discordrpc.h"
 #include "../libopensubsonic/logger.h"
 #include "../libopensubsonic/endpoint_getSong.h"
 #include "../libopensubsonic/httpclient.h"
@@ -28,17 +29,22 @@ GMainLoop* loop;
 bool isPlaying = false;
 
 static gboolean gst_bus_call(GstBus* bus, GstMessage* message, gpointer data) {
-    printf("BUSCALL\n");
     GMainLoop* loop = (GMainLoop*)data;
 
     switch (GST_MESSAGE_TYPE(message)) {
         case GST_MESSAGE_EOS:
-            printf("End of stream\n");
+            logger_log_important(__func__, "[GBus] End of stream");
             gst_element_set_state(pipeline, GST_STATE_NULL);
             isPlaying = false;
             break;
+        case GST_MESSAGE_BUFFERING:
+            gint percent = 0;
+            gst_message_parse_buffering(message, &percent);
+            printf("Buffering (%d%%)...\n", (int)percent);
+            break;
         case GST_MESSAGE_ERROR:
             printf("Error\n");
+            break;
         default:
             printf("Unknown\n");
             break;
@@ -47,18 +53,20 @@ static gboolean gst_bus_call(GstBus* bus, GstMessage* message, gpointer data) {
     return TRUE;
 }
 
-void* OSSPlayer_GstMainLoop(void*) {
-    printf("GstMainLoop running\n");
+void* OSSPlayer_GMainLoop(void*) {
+    logger_log_important(__func__, "GMainLoop thread running.");
+    // This is needed for the Gstreamer bus to work, but it hangs the thread
     g_main_loop_run(loop);
 }
 
 void* OSSPlayer_ThrdInit(void*) {
     // Player init function for pthread entry
-    printf("Player thread running.\n");
+    logger_log_important(__func__, "Player thread running.");
     OSSPlayer_GstInit();
 
-    pthread_t pthr_gst;
-    pthread_create(&pthr_gst, NULL, OSSPlayer_GstMainLoop, NULL);
+    // Launch GMainLoop thread
+    pthread_t pthr_gml;
+    pthread_create(&pthr_gml, NULL, OSSPlayer_GMainLoop, NULL);
 
     // Poll play queue for new items to play
     while (true) { // TODO use global bool instead
@@ -71,12 +79,29 @@ void* OSSPlayer_ThrdInit(void*) {
                 // TODO: this
             }
 
-            //opensubsonic_httpClient_URL_t* song_url = malloc(sizeof(opensubsonic_httpClient_URL_t));
-            //opensubsonic_httpClient_URL_prepare(&song_url);
-            //song_url->endpoint = OPENSUBSONIC_ENDPOINT_GETSONG;
-            //song_url->id = id;
-            //opensubsonic_httpClient_formUrl(&song_url);
+            // Fetch song information
+            opensubsonic_httpClient_URL_t* song_url = malloc(sizeof(opensubsonic_httpClient_URL_t));
+            opensubsonic_httpClient_URL_prepare(&song_url);
+            song_url->endpoint = OPENSUBSONIC_ENDPOINT_GETSONG;
+            song_url->id = strdup(id);
+            opensubsonic_httpClient_formUrl(&song_url);
+            opensubsonic_getSong_struct* songStruct;
+            opensubsonic_httpClient_fetchResponse(&song_url, (void**)&songStruct);
 
+            // Update Discord RPC
+            discordrpc_data* discordrpc = NULL;
+            discordrpc_struct_init(&discordrpc);
+            discordrpc->state = DISCORDRPC_STATE_PLAYING;
+            discordrpc->songTitle = strdup(songStruct->title);
+            discordrpc->songArtist = strdup(songStruct->artist);
+            //discordrpc->coverArtUrl = "https://pbs.twimg.com/profile_banners/2995329026/1758957365/1500x500";
+            discordrpc_update(&discordrpc);
+            discordrpc_struct_deinit(&discordrpc);
+
+            opensubsonic_getSong_struct_free(&songStruct);
+            opensubsonic_httpClient_URL_cleanup(&song_url);
+
+            // Create stream URL
             opensubsonic_httpClient_URL_t* stream_url = malloc(sizeof(opensubsonic_httpClient_URL_t));
             opensubsonic_httpClient_URL_prepare(&stream_url);
             stream_url->endpoint = OPENSUBSONIC_ENDPOINT_STREAM;
@@ -87,7 +112,6 @@ void* OSSPlayer_ThrdInit(void*) {
             isPlaying = true;
             gst_element_set_state(pipeline, GST_STATE_PLAYING);
         }
-        printf("Sleeping\n");
         usleep(200 * 1000); // Use futex and signals instead of this TODO
     }
 }
@@ -230,9 +254,6 @@ int OSSPlayer_GstInit() {
 
         g_object_set(equalizer, "enabled", true, NULL);
     }
-
-    //g_main_loop_run(loop);
-
 }
 
 int OSSPlayer_GstDeInit() {
@@ -249,12 +270,26 @@ int OSSPlayer_QueueAppend(char* id) {
 
 char* OSSPlayer_QueuePopFront() {
     // Call to C++ function
+    // NOTE: 'id' is heap-allocated from C++
     char* id = internal_OSSPQ_PopFromFront();
     if (id == NULL) {
         // Queue is empty TODO
         printf("FUCKFUCKFUCK\n");
     }
     return id;
+}
+
+/*
+ * Gstreamer Element Control Functions
+ */
+float OSSPlayer_GstECont_InVolume_Get() {
+    gdouble vol;
+    g_object_get(in_volume, "volume", &vol, NULL);
+    return (float)vol;
+}
+
+void OSSPlayer_GstECont_InVolume_set(float val) {
+    g_object_set(in_volume, "volume", val, NULL);
 }
 
 /*
