@@ -33,6 +33,7 @@ typedef struct {
     // Discord RPC Settings
     bool discordrpc_enable;             // Enable Discord RPC
     int discordrpc_method;              // Discord RPC Method (0 = Regular, 1 = DscrdRPC)
+    bool discordrpc_showSysDetails;     // Show 'on OS ARCH VERSION' in RPC
     
     // Audio Settings
     bool audio_equalizer_enable;

@@ -15,10 +15,16 @@ pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
 
 add_subdirectory(external/discord-rpc)
 
+if(APPLE)
+    link_directories(/opt/homebrew/Cellar/glib/2.86.0/lib)
+    link_directories(/opt/homebrew/lib)
+endif()
+
 add_executable(ossp MACOSX_BUNDLE
     main.c
-    gui/gui_entry.cpp
     configHandler.c
+    discordrpc.c
+    gui/gui_entry.cpp
     player/player.c
     player/playQueue.cpp
     libopensubsonic/crypto.c

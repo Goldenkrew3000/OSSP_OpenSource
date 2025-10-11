@@ -39,6 +39,7 @@ int configHandler_Read(configHandler_config_t** configObj) {
     (*configObj)->lastfm_api_session_key = NULL;
     (*configObj)->discordrpc_enable = false;
     (*configObj)->discordrpc_method = 0;
+    (*configObj)->discordrpc_showSysDetails = false;
     (*configObj)->audio_equalizer_enable = false;
     (*configObj)->audio_equalizer_followPitch = false;
     (*configObj)->audio_equalizer_graphCount = 0;
@@ -232,6 +233,13 @@ int configHandler_Read(configHandler_config_t** configObj) {
     cJSON* discordrpc_method = cJSON_GetObjectItemCaseSensitive(discordrpc_root, "method");
     if (cJSON_IsNumber(discordrpc_method)) {
         (*configObj)->discordrpc_method = discordrpc_method->valueint;
+    }
+
+    cJSON* discordrpc_showSysDetails = cJSON_GetObjectItemCaseSensitive(discordrpc_root, "showSystemDetails");
+    if (cJSON_IsBool(discordrpc_showSysDetails)) {
+        if (cJSON_IsTrue(discordrpc_showSysDetails)) {
+            (*configObj)->discordrpc_showSysDetails = true;
+        }
     }
 
     // Make an object from audio

@@ -10,8 +10,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "external/discord-rpc/include/discord_rpc.h"
+#include "libopensubsonic/logger.h"
+#include "configHandler.h"
 #include "discordrpc.h"
 
+extern configHandler_config_t* configObj;
 const char* discordrpc_appid = "1407025303779278980";
 char* discordrpc_osString = NULL;
 static int rc = 0;
@@ -64,6 +67,8 @@ void discordrpc_init() {
     discordrpc_osString = discordrpc_getOS();
 }
 
+#include <stdbool.h>
+
 void discordrpc_update(discordrpc_data** discordrpc_struct) {
     printf("[DiscordRPC] Updating...\n");
     DiscordRichPresence presence;
@@ -81,7 +86,9 @@ void discordrpc_update(discordrpc_data** discordrpc_struct) {
         presence.state = stateString;
         // TODO: Discord is currently broken for this rn
         //presence.largeImageKey = (*discordrpc_struct)->coverArtUrl;
-        presence.largeImageText = discordrpc_osString;
+        if (configObj->discordrpc_showSysDetails) {
+            presence.largeImageText = discordrpc_osString;
+        }
     } else if ((*discordrpc_struct)->state == DISCORDRPC_STATE_PAUSED) {
 
     }
