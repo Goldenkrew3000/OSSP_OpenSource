@@ -2,7 +2,10 @@
 An effort to open-source OSSP
 
 ## Notice
-OSSP is under heavy development and is NOT ready for daily use.
+OSSP is under heavy development and is NOT ready for daily use.<br>
+Also, I am NOT RESPONSIBLE if you damage your hearing and/or any of your equipment using OSSP.<br>
+OSSP does NOT apply ANY restrictions on the volume/bass levels and this can QUICKY lead to DAMAGED EQUIPMENT AND/OR HEARING.<br>
+YOU ARE RESPONSIBLE FOR YOUR OWN CHOICES. Keep it safe, please, you cannot repair damaged hearing.<br>
 
 ## What is OSSP?
 OSSP ('OpenSubsonic Player') is a music player application for UNIX®/Unix-like Operating Systems.<br>
