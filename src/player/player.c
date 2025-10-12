@@ -79,6 +79,8 @@ void* OSSPlayer_ThrdInit(void*) {
                 // TODO: this
             }
 
+            // NOTE: Using a few strdup()'s because the cleanup/deinit functions perform free's and to avoid UAFs/Double frees
+
             // Fetch song information
             opensubsonic_httpClient_URL_t* song_url = malloc(sizeof(opensubsonic_httpClient_URL_t));
             opensubsonic_httpClient_URL_prepare(&song_url);
@@ -88,15 +90,25 @@ void* OSSPlayer_ThrdInit(void*) {
             opensubsonic_getSong_struct* songStruct;
             opensubsonic_httpClient_fetchResponse(&song_url, (void**)&songStruct);
 
+            // Generate the cover art URL
+            opensubsonic_httpClient_URL_t* coverart_url = malloc(sizeof(opensubsonic_httpClient_URL_t));
+            opensubsonic_httpClient_URL_prepare(&coverart_url);
+            coverart_url->endpoint = OPENSUBSONIC_ENDPOINT_GETCOVERART;
+            coverart_url->id = strdup(id);
+            opensubsonic_httpClient_formUrl(&coverart_url);
+
             // Update Discord RPC
             discordrpc_data* discordrpc = NULL;
             discordrpc_struct_init(&discordrpc);
             discordrpc->state = DISCORDRPC_STATE_PLAYING;
             discordrpc->songTitle = strdup(songStruct->title);
             discordrpc->songArtist = strdup(songStruct->artist);
-            //discordrpc->coverArtUrl = "https://pbs.twimg.com/profile_banners/2995329026/1758957365/1500x500";
+            discordrpc->coverArtUrl = strdup(coverart_url->formedUrl);
             discordrpc_update(&discordrpc);
             discordrpc_struct_deinit(&discordrpc);
+
+            printf("%s\n", coverart_url->formedUrl);
+            opensubsonic_httpClient_URL_cleanup(&coverart_url);
 
             opensubsonic_getSong_struct_free(&songStruct);
             opensubsonic_httpClient_URL_cleanup(&song_url);

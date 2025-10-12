@@ -14,6 +14,10 @@
 #include "configHandler.h"
 #include "discordrpc.h"
 
+#if defined(__APPLE__) && defined(__MACH__)
+#include <sys/sysctl.h>
+#endif // defined(__APPLE__) && defined(__MACH__)
+
 extern configHandler_config_t* configObj;
 const char* discordrpc_appid = "1407025303779278980";
 char* discordrpc_osString = NULL;
@@ -82,8 +86,7 @@ void discordrpc_update(discordrpc_data** discordrpc_struct) {
         asprintf(&stateString, "by %s", (*discordrpc_struct)->songArtist);
         presence.details = detailsString;
         presence.state = stateString;
-        // TODO: Discord is currently broken for this rn
-        //presence.largeImageKey = (*discordrpc_struct)->coverArtUrl;
+        presence.largeImageKey = (*discordrpc_struct)->coverArtUrl;
         if (configObj->discordrpc_showSysDetails) {
             presence.largeImageText = discordrpc_osString;
         }
@@ -99,6 +102,7 @@ void discordrpc_update(discordrpc_data** discordrpc_struct) {
 }
 
 char* discordrpc_getOS() {
+#if defined(__linux__)
     // NOTE: Could have made a sysctl function, but this is literally only done here, not worth it
     // TODO: This is ONLY linux compatible at this point
 
@@ -160,4 +164,53 @@ char* discordrpc_getOS() {
         return NULL;
     }
     return osString;
+#elif defined(__APPLE__) && defined(__MACH__)
+    // NOTE: Okay so I _could_ just print 'Darwin' for the OS Type, but on the 0.0001% chance that this is running on
+    //       OpenDarwin / PureDarwin, I am fetching the name using a sysctl
+    char buf_ostype[16];
+    size_t sz_ostype = sizeof(buf_ostype);
+    char buf_osrelease[16];
+    size_t sz_osrelease = sizeof(buf_osrelease);
+    int isArm64 = 0;
+    size_t sz_isArm64 = sizeof(isArm64);
+    int mib[CTL_MAXNAME];
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_OSTYPE;
+    if (sysctl(mib, 2, buf_ostype, &sz_ostype, NULL, 0) == -1) {
+        logger_log_error(__func__, "Could not perform kern.ostype sysctl.");
+        return NULL;
+    }
+
+    mib[1] = KERN_OSRELEASE;
+    if (sysctl(mib, 2, buf_osrelease, &sz_osrelease, NULL, 0) == -1) {
+        logger_log_error(__func__, "Could not perform kern.osrelease sysctl.");
+        return NULL;
+    }
+
+    // hw.optional.arm64 does not seem to have a direct mib0/1 route
+    size_t mib_len = CTL_MAXNAME;
+    if (sysctlnametomib("hw.optional.arm64", mib, &mib_len) != 0) {
+        logger_log_error(__func__, "Could not perform hw.optional.arm64 sysctl.");
+        return NULL;
+    }
+    if (sysctl(mib, mib_len, &isArm64, &sz_isArm64, NULL, 0) != 0) {
+        logger_log_error(__func__, "Could not perform hw.optional.arm64 sysctl.");
+        return NULL;
+    }
+
+    char* osString = NULL;
+    if (isArm64 == 1) {
+        rc = asprintf(&osString, "on %s XNU aarch64 %s", buf_ostype, buf_osrelease);
+    } else {
+        rc = asprintf(&osString, "on %s XNU x86_64 %s", buf_ostype, buf_osrelease);
+    }
+    if (rc == -1) {
+        logger_log_error(__func__, "asprintf() failed.");
+        return NULL;
+    }
+    return osString;
+#else
+    return strdup("on Unknown");
+#endif
 }
