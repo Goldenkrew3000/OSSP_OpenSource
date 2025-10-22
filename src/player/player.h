@@ -1,3 +1,9 @@
+/*
+ * OpenSubsonicPlayer
+ * Goldenkrew3000 2025
+ * License: GNU General Public License 3.0
+ */
+
 #ifndef _PLAYER_H
 #define _PLAYER_H
 

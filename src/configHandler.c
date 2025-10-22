@@ -1,3 +1,10 @@
+/*
+ * OpenSubsonicPlayer
+ * Goldenkrew3000 2025
+ * License: GNU General Public License 3.0
+ * Info: Configuration Handler
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,7 +26,7 @@ static int rc = 0;
 int configHandler_Read(configHandler_config_t** configObj) {
     // Allocate config object on heap
     *configObj = malloc(sizeof(configHandler_config_t));
-    
+
     // Initialize struct variables
     (*configObj)->opensubsonic_protocol = NULL;
     (*configObj)->opensubsonic_server = NULL;
@@ -59,11 +66,11 @@ int configHandler_Read(configHandler_config_t** configObj) {
     (*configObj)->lv2_parax32_frequency_left = NULL;
     (*configObj)->lv2_parax32_frequency_right = NULL;
     (*configObj)->lv2_reverb_filter_name = NULL;
-    
+
     // Set internal configuration values
     (*configObj)->internal_opensubsonic_version = strdup("1.8.0");
     (*configObj)->internal_opensubsonic_clientName = strdup("Hojuix_OSSP");
-    
+
     // Form the path to the config JSON
     char* config_path = NULL;
 #if defined(__APPLE__) && defined(__MACH__) && defined(XCODE)
@@ -82,22 +89,24 @@ int configHandler_Read(configHandler_config_t** configObj) {
         free(config_path);
         return 1;
     }
-    
+
     // Read config file
     FILE* config_fd = NULL;
     char* config_buf = NULL;
     long config_fsize = 0;
     long config_fread_rc = 0; // Needs to be separate from 'rc' as fread() returns bytes read
-    
+
     // Check if the config file exists, and fetch it's size
     struct stat st;
     if (stat(config_path, &st) == 0) {
         config_fsize = st.st_size;
     } else {
         logger_log_error(__func__, "stat() failed (Config file does not exist).");
+        logger_log_error(__func__, "This is most likely because your config file does not exist.");
+        logger_log_error(__func__, "Config file should be located at ~/.config/ossp/config.json");
         return 1;
     }
-    
+
     // Actually open and read in the contents of the config file
     config_fd = fopen(config_path, "rb");
     if (config_fd == NULL) {
@@ -106,14 +115,14 @@ int configHandler_Read(configHandler_config_t** configObj) {
         return 1;
     }
     free(config_path);
-    
+
     config_buf = (char*)malloc(config_fsize + 1);
     if (config_buf == NULL) {
         logger_log_error(__func__, "malloc() failed (Could not allocate enough memory for the config file).");
         fclose(config_fd);
         return 1;
     }
-    
+
     config_fread_rc = fread(config_buf, 1, config_fsize, config_fd);
     if (config_fread_rc != config_fsize) {
         logger_log_error(__func__, "fread() failed (Could not read the config file).");
@@ -121,11 +130,11 @@ int configHandler_Read(configHandler_config_t** configObj) {
         free(config_buf);
         return 1;
     }
-    
+
     // Null terminate the buffer
     config_buf[config_fsize] = '\0';
     fclose(config_fd);
-    
+
     // Parse config JSON
     cJSON* root = cJSON_Parse(config_buf);
     free(config_buf);
@@ -133,7 +142,7 @@ int configHandler_Read(configHandler_config_t** configObj) {
         logger_log_error(__func__, "cJSON_Parse() failed (Could not parse the configuration JSON).");
         return 1;
     }
-    
+
     // Make an object from opensubsonic_server
     // TODO - Use the new OSS_P*oj functions?
     cJSON* opensubsonic_server_root = cJSON_GetObjectItemCaseSensitive(root, "opensubsonic_server");
@@ -142,27 +151,27 @@ int configHandler_Read(configHandler_config_t** configObj) {
         cJSON_Delete(root);
         return 1;
     }
-    
+
     cJSON* opensubsonic_server_protocol = cJSON_GetObjectItemCaseSensitive(opensubsonic_server_root, "protocol");
     if (cJSON_IsString(opensubsonic_server_protocol) && opensubsonic_server_protocol->valuestring != NULL) {
         (*configObj)->opensubsonic_protocol = strdup(opensubsonic_server_protocol->valuestring);
     }
-    
+
     cJSON* opensubsonic_server_server = cJSON_GetObjectItemCaseSensitive(opensubsonic_server_root, "server");
     if (cJSON_IsString(opensubsonic_server_server) && opensubsonic_server_server->valuestring != NULL) {
         (*configObj)->opensubsonic_server = strdup(opensubsonic_server_server->valuestring);
     }
-    
+
     cJSON* opensubsonic_server_username = cJSON_GetObjectItemCaseSensitive(opensubsonic_server_root, "username");
     if (cJSON_IsString(opensubsonic_server_username) && opensubsonic_server_username->valuestring != NULL) {
         (*configObj)->opensubsonic_username = strdup(opensubsonic_server_username->valuestring);
     }
-    
+
     cJSON* opensubsonic_server_password = cJSON_GetObjectItemCaseSensitive(opensubsonic_server_root, "password");
     if (cJSON_IsString(opensubsonic_server_password) && opensubsonic_server_password->valuestring != NULL) {
         (*configObj)->opensubsonic_password = strdup(opensubsonic_server_password->valuestring);
     }
-    
+
     // Make an object from scrobbler
     cJSON* scrobbler_root = cJSON_GetObjectItemCaseSensitive(root, "scrobbler");
     if (scrobbler_root == NULL) {
@@ -170,46 +179,46 @@ int configHandler_Read(configHandler_config_t** configObj) {
         cJSON_Delete(root);
         return 1;
     }
-    
+
     cJSON* scrobbler_listenbrainz_enable = cJSON_GetObjectItemCaseSensitive(scrobbler_root, "listenbrainz_enable");
     if (cJSON_IsBool(scrobbler_listenbrainz_enable)) {
         if (cJSON_IsTrue(scrobbler_listenbrainz_enable)) {
             (*configObj)->listenbrainz_enable = true;
         }
     }
-    
+
     cJSON* scrobbler_listenbrainz_token = cJSON_GetObjectItemCaseSensitive(scrobbler_root, "listenbrainz_token");
     if (cJSON_IsString(scrobbler_listenbrainz_token) && scrobbler_listenbrainz_token->valuestring != NULL) {
         (*configObj)->listenbrainz_token = strdup(scrobbler_listenbrainz_token->valuestring);
     }
-    
+
     cJSON* scrobbler_lastfm_enable = cJSON_GetObjectItemCaseSensitive(scrobbler_root, "lastfm_enable");
     if (cJSON_IsBool(scrobbler_lastfm_enable)) {
         if (cJSON_IsTrue(scrobbler_lastfm_enable)) {
             (*configObj)->lastfm_enable = true;
         }
     }
-    
+
     cJSON* scrobbler_lastfm_username = cJSON_GetObjectItemCaseSensitive(scrobbler_root, "lastfm_username");
     if (cJSON_IsString(scrobbler_lastfm_username) && scrobbler_lastfm_username->valuestring != NULL) {
         (*configObj)->lastfm_username = strdup(scrobbler_lastfm_username->valuestring);
     }
-    
+
     cJSON* scrobbler_lastfm_password = cJSON_GetObjectItemCaseSensitive(scrobbler_root, "lastfm_password");
     if (cJSON_IsString(scrobbler_lastfm_password) && scrobbler_lastfm_password->valuestring != NULL) {
         (*configObj)->lastfm_password = strdup(scrobbler_lastfm_password->valuestring);
     }
-    
+
     cJSON* scrobbler_lastfm_api_key = cJSON_GetObjectItemCaseSensitive(scrobbler_root, "lastfm_api_key");
     if (cJSON_IsString(scrobbler_lastfm_api_key) && scrobbler_lastfm_api_key->valuestring != NULL) {
         (*configObj)->lastfm_api_key = strdup(scrobbler_lastfm_api_key->valuestring);
     }
-    
+
     cJSON* scrobbler_lastfm_api_secret = cJSON_GetObjectItemCaseSensitive(scrobbler_root, "lastfm_api_secret");
     if (cJSON_IsString(scrobbler_lastfm_api_secret) && scrobbler_lastfm_api_secret->valuestring != NULL) {
         (*configObj)->lastfm_api_secret = strdup(scrobbler_lastfm_api_secret->valuestring);
     }
-    
+
     cJSON* scrobbler_lastfm_api_session_key = cJSON_GetObjectItemCaseSensitive(scrobbler_root, "lastfm_session_key");
     if (cJSON_IsString(scrobbler_lastfm_api_session_key) && scrobbler_lastfm_api_session_key->valuestring != NULL) {
         (*configObj)->lastfm_api_session_key = strdup(scrobbler_lastfm_api_session_key->valuestring);
@@ -249,7 +258,7 @@ int configHandler_Read(configHandler_config_t** configObj) {
         cJSON_Delete(root);
         return 1;
     }
-    
+
     // Make an object from equalizer
     cJSON* equalizer_root = cJSON_GetObjectItemCaseSensitive(audio_root, "equalizer");
     if (equalizer_root == NULL) {
@@ -257,21 +266,21 @@ int configHandler_Read(configHandler_config_t** configObj) {
         cJSON_Delete(root);
         return 1;
     }
-    
+
     cJSON* audio_equalizer_enable = cJSON_GetObjectItemCaseSensitive(equalizer_root, "enable");
     if (cJSON_IsBool(audio_equalizer_enable)) {
         if (cJSON_IsTrue(audio_equalizer_enable)) {
             (*configObj)->audio_equalizer_enable = true;
         }
     }
-    
+
     cJSON* audio_equalizer_followPitch = cJSON_GetObjectItemCaseSensitive(equalizer_root, "followPitch");
     if (cJSON_IsBool(audio_equalizer_followPitch)) {
         if (cJSON_IsTrue(audio_equalizer_followPitch)) {
             (*configObj)->audio_equalizer_followPitch = true;
         }
     }
-    
+
     // Fetch the equalizer graph array, and allocate memory for it
     cJSON* equalizer_graph_array = cJSON_GetObjectItemCaseSensitive(equalizer_root, "graph");
     if (equalizer_graph_array == NULL) {
@@ -279,7 +288,7 @@ int configHandler_Read(configHandler_config_t** configObj) {
         cJSON_Delete(root);
         return 1;
     }
-    
+
     (*configObj)->audio_equalizer_graphCount = cJSON_GetArraySize(equalizer_graph_array);
     (*configObj)->audio_equalizer_graph = (configHandler_eqGraph_t*)malloc((*configObj)->audio_equalizer_graphCount * sizeof(configHandler_eqGraph_t));
     if ((*configObj)->audio_equalizer_graph == NULL) {
@@ -287,7 +296,7 @@ int configHandler_Read(configHandler_config_t** configObj) {
         cJSON_Delete(root);
         return 1;
     }
-    
+
     // Initialize more struct variables
     for (size_t i = 0; i < (*configObj)->audio_equalizer_graphCount; i++) {
         (*configObj)->audio_equalizer_graph[i].bandwidth = 0.00;
@@ -295,7 +304,7 @@ int configHandler_Read(configHandler_config_t** configObj) {
         (*configObj)->audio_equalizer_graph[i].gain = 0.00;
         (*configObj)->audio_equalizer_graph[i].bypass = false;
     }
-    
+
     for (size_t i = 0; i < (*configObj)->audio_equalizer_graphCount; i++) {
         cJSON* array_equalizer_graph_root = cJSON_GetArrayItem(equalizer_graph_array, (int)i);
         if (array_equalizer_graph_root == NULL) {
@@ -303,22 +312,22 @@ int configHandler_Read(configHandler_config_t** configObj) {
             cJSON_Delete(root);
             return 1;
         }
-        
+
         cJSON* audio_equalizer_graph_bandwidth = cJSON_GetObjectItemCaseSensitive(array_equalizer_graph_root, "bandwidth");
         if (cJSON_IsNumber(audio_equalizer_graph_bandwidth)) {
             (*configObj)->audio_equalizer_graph[i].bandwidth = audio_equalizer_graph_bandwidth->valuedouble;
         }
-        
+
         cJSON* audio_equalizer_graph_frequency = cJSON_GetObjectItemCaseSensitive(array_equalizer_graph_root, "frequency");
         if (cJSON_IsNumber(audio_equalizer_graph_frequency)) {
             (*configObj)->audio_equalizer_graph[i].frequency = audio_equalizer_graph_frequency->valueint;
         }
-        
+
         cJSON* audio_equalizer_graph_gain = cJSON_GetObjectItemCaseSensitive(array_equalizer_graph_root, "gain");
         if (cJSON_IsNumber(audio_equalizer_graph_gain)) {
             (*configObj)->audio_equalizer_graph[i].gain = audio_equalizer_graph_gain->valuedouble;
         }
-        
+
         cJSON* audio_equalizer_graph_bypass = cJSON_GetObjectItemCaseSensitive(array_equalizer_graph_root, "bypass");
         if (cJSON_IsBool(audio_equalizer_graph_bypass)) {
             if (cJSON_IsTrue(audio_equalizer_graph_bypass)) {
@@ -326,7 +335,7 @@ int configHandler_Read(configHandler_config_t** configObj) {
             }
         }
     }
-    
+
     // Make an object from pitch
     cJSON* pitch_root = cJSON_GetObjectItemCaseSensitive(audio_root, "pitch");
     if (pitch_root == NULL) {
@@ -334,24 +343,24 @@ int configHandler_Read(configHandler_config_t** configObj) {
         cJSON_Delete(root);
         return 1;
     }
-    
+
     cJSON* audio_pitch_enable = cJSON_GetObjectItemCaseSensitive(pitch_root, "enable");
     if (cJSON_IsBool(audio_pitch_enable)) {
         if (cJSON_IsTrue(audio_pitch_enable)) {
             (*configObj)->audio_pitch_enable = true;
         }
     }
-    
+
     cJSON* audio_pitch_cents = cJSON_GetObjectItemCaseSensitive(pitch_root, "cents");
     if (cJSON_IsNumber(audio_pitch_cents)) {
         (*configObj)->audio_pitch_cents = audio_pitch_cents->valuedouble;
     }
-    
+
     cJSON* audio_pitch_rate = cJSON_GetObjectItemCaseSensitive(pitch_root, "rate");
     if (cJSON_IsNumber(audio_pitch_rate)) {
         (*configObj)->audio_pitch_rate = audio_pitch_rate->valuedouble;
     }
-    
+
     // Make an object from reverb
     cJSON* reverb_root = cJSON_GetObjectItemCaseSensitive(audio_root, "reverb");
     if (reverb_root == NULL) {
@@ -359,14 +368,14 @@ int configHandler_Read(configHandler_config_t** configObj) {
         cJSON_Delete(root);
         return 1;
     }
-    
+
     cJSON* audio_reverb_enable = cJSON_GetObjectItemCaseSensitive(reverb_root, "enable");
     if (cJSON_IsBool(audio_reverb_enable)) {
         if (cJSON_IsTrue(audio_reverb_enable)) {
             (*configObj)->audio_reverb_enable = true;
         }
     }
-    
+
     cJSON* audio_reverb_wetDryMix = cJSON_GetObjectItemCaseSensitive(reverb_root, "wetDryMix");
     if (cJSON_IsNumber(audio_reverb_wetDryMix)) {
         (*configObj)->audio_reverb_wetDryMix = audio_reverb_wetDryMix->valuedouble;

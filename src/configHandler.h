@@ -1,3 +1,9 @@
+/*
+ * OpenSubsonicPlayer
+ * Goldenkrew3000 2025
+ * License: GNU General Public License 3.0
+ */
+
 #ifndef _CONFIG_HANDLER_H
 #define _CONFIG_HANDLER_H
 #include <stdbool.h>
@@ -19,7 +25,7 @@ typedef struct {
     char* internal_opensubsonic_clientName;     // (Internal) Opensubsonic Client Name
     char* internal_opensubsonic_loginSalt;      // (Internal) Opensubsonic Login Salt
     char* internal_opensubsonic_loginToken;     // (Internal) Opensubsonic Login Token
-    
+
     // Scrobbler Settings
     bool listenbrainz_enable;           // Enable ListenBrainz Scrobbling
     char* listenbrainz_token;           // ListenBrainz Token
@@ -29,12 +35,12 @@ typedef struct {
     char* lastfm_api_key;               // LastFM API Key
     char* lastfm_api_secret;            // LastFM API Secret
     char* lastfm_api_session_key;       // LastFM API Session Key (Generated from authorization endpoint)
-    
+
     // Discord RPC Settings
     bool discordrpc_enable;             // Enable Discord RPC
     int discordrpc_method;              // Discord RPC Method (0 = Regular, 1 = DscrdRPC)
     bool discordrpc_showSysDetails;     // Show 'on OS ARCH VERSION' in RPC
-    
+
     // Audio Settings
     bool audio_equalizer_enable;
     bool audio_equalizer_followPitch;   // Have equalizer align to pitch adjustment

@@ -1,17 +1,17 @@
+/*
+ * OpenSubsonicPlayer
+ * Goldenkrew3000 2025
+ * License: GNU General Public License 3.0
+ * Info: Gstreamer Queue Handler
+ */
+
 #include <string.h>
 #include <string>
 #include <deque>
 #include "playQueue.hpp"
 
-#include <iostream> // debug
-
 // NOTE: Acronym is OpenSubsonicPlayerQueue
-
 std::deque<std::string> OSSPQ_Items;
-
-int internal_OSSPQ_Init() {
-    //
-}
 
 int internal_OSSPQ_AppendToEnd(char* id) {
     std::string cpp_id(id);

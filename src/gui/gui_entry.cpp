@@ -1,3 +1,10 @@
+/*
+ * OpenSubsonicPlayer
+ * Goldenkrew3000 2025
+ * License: GNU General Public License 3.0
+ * Info: Debug / Prototype graphical interface
+ */
+
 #include "../external/imgui/imgui.h"
 #include "../external/imgui/backends/imgui_impl_sdl2.h"
 #include "../external/imgui/backends/imgui_impl_opengl2.h"
@@ -41,7 +48,7 @@ int qt_gui_entry(int argc, char** argv) {
     SDL_GLContext gl_context = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, gl_context);
     SDL_GL_SetSwapInterval(1); // Vsync
-    
+
     // Create ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -116,7 +123,7 @@ int qt_gui_entry(int argc, char** argv) {
         ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
 SDL_GL_SwapWindow(window);
     }
-    
+
     // Cleanup
     ImGui_ImplOpenGL2_Shutdown();
     ImGui_ImplSDL2_Shutdown();
@@ -155,7 +162,7 @@ void showLikedSongs() {
     ImGui::Begin("Liked Songs");
 
     ImGui::Text("Liked Songs");
-    
+
     if (ImGui::Button("Close")) {
         bLikedSongsShow = false;
     }

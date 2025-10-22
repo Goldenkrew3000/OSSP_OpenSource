@@ -1,9 +1,15 @@
+/*
+ * OpenSubsonicPlayer
+ * Goldenkrew3000 2025
+ * License: GNU General Public License 3.0
+ * Info: OSSP Entry Point
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
 #include "gui/gui_entry.hpp"
-#include "libopensubsonic/logger.h"
 #include "libopensubsonic/crypto.h"
 #include "libopensubsonic/httpclient.h"
 #include "libopensubsonic/endpoint_ping.h"

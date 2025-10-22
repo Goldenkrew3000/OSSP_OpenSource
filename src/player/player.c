@@ -1,7 +1,8 @@
 /*
  * OpenSubsonicPlayer
  * Goldenkrew3000 2025
- * License: AGPL-3.0
+ * License: GNU General Public License 3.0
+ * Info: Gstreamer Handler
  */
 
 #include <stdio.h>
@@ -37,16 +38,56 @@ static gboolean gst_bus_call(GstBus* bus, GstMessage* message, gpointer data) {
             gst_element_set_state(pipeline, GST_STATE_NULL);
             isPlaying = false;
             break;
-        case GST_MESSAGE_BUFFERING:
+        case GST_MESSAGE_BUFFERING: {
             gint percent = 0;
             gst_message_parse_buffering(message, &percent);
             printf("Buffering (%d%%)...\n", (int)percent);
             break;
-        case GST_MESSAGE_ERROR:
-            printf("Error\n");
+        }
+        case GST_MESSAGE_ERROR: {
+            gchar* debug;
+            GError* error;
+            gst_message_parse_error(message, &error, &debug);
+            printf("Gstreamer Error: %s\n", error);
+            g_error_free(error);
+            g_free(debug);
+            break;
+        }
+        case GST_MESSAGE_STATE_CHANGED:
+            printf("State changed\n");
+            break;
+        case GST_MESSAGE_NEW_CLOCK:
+            //
+            break;
+        case GST_MESSAGE_LATENCY:
+            //
+            break;
+        case GST_MESSAGE_STREAM_START:
+            //
+            break;
+        case GST_MESSAGE_ELEMENT:
+            //
+            break;
+        case GST_MESSAGE_ASYNC_DONE:
+            //
+            break;
+        case GST_MESSAGE_STREAM_STATUS:
+            //
+            break;
+        case GST_MESSAGE_STREAMS_SELECTED:
+            //
+            break;
+        case GST_MESSAGE_STREAM_COLLECTION:
+            //
+            break;
+        case GST_MESSAGE_DURATION_CHANGED:
+            //
+            break;
+        case GST_MESSAGE_TAG:
+            // Unused
             break;
         default:
-            printf("Unknown\n");
+            printf("Unknown Message. Type %ld\n", GST_MESSAGE_TYPE(message));
             break;
     }
 
@@ -202,10 +243,10 @@ int OSSPlayer_GstInit() {
 
     // Initialize in-volume
     g_object_set(in_volume, "volume", 0.175, NULL);
-    
+
     // Initialize equalizer
     if (configObj->audio_equalizer_enable) {
-        printf("Initializing equalizer...\n");
+        printf("Initializing %d equalizer bands...\n", configObj->audio_equalizer_graphCount);
 
         // Dynamically append settings to the equalizer to match the config file
         for (int i = 0; i < configObj->audio_equalizer_graphCount; i++) {
@@ -235,7 +276,7 @@ int OSSPlayer_GstInit() {
             gain = OSSPlayer_DbLinMul(gain);
             g_object_set(equalizer, gl_name, gain, NULL);
             g_object_set(equalizer, gr_name, gain, NULL);
-            
+
             g_object_set(equalizer, ql_name, 4.36, NULL);
             g_object_set(equalizer, qr_name, 4.36, NULL);
 
@@ -247,9 +288,11 @@ int OSSPlayer_GstInit() {
                 float freq = (float)configObj->audio_equalizer_graph[i].frequency;
                 float semitone = (float)configObj->audio_pitch_cents / 100.0;
                 freq = OSSPlayer_PitchFollow(freq, semitone);
+                printf("EQ band %d - F: %.2f(Fp) / G: %.2f / Q: 4.36\n", i + 1, freq, gain);
                 g_object_set(equalizer, fl_name, freq, NULL);
                 g_object_set(equalizer, fr_name, freq, NULL);
             } else {
+                printf("EQ band %d - F: %.2f / G: %.2f / Q: 4.36\n", i + 1, (float)configObj->audio_equalizer_graph[i].frequency, gain);
                 g_object_set(equalizer, fl_name, (float)configObj->audio_equalizer_graph[i].frequency, NULL);
                 g_object_set(equalizer, fr_name, (float)configObj->audio_equalizer_graph[i].frequency, NULL);
             }

@@ -1,7 +1,7 @@
 /*
  * OpenSubSonicPlayer
  * Goldenkrew3000 2025
- * GPL-3.0
+ * License: GNU General Public License 3.0
  * Discord Local RPC Handler
  * Note: This provides server auth creds (encoded) directly to Discord, could use Spotify's API instead??
  */
