@@ -17,13 +17,12 @@
 #include "player/player.h"
 #include "discordrpc.h"
 
+static int rc = 0;
 configHandler_config_t* configObj = NULL;
 int checkConfigFile();
 int validateConnection();
 
 int main(int argc, char** argv) {
-    int rc = 0;
-
     // Read config file
     rc = configHandler_Read(&configObj);
     if (rc != 0) {
@@ -61,7 +60,10 @@ int main(int argc, char** argv) {
     discordrpc_data* discordrpc = NULL;
     discordrpc_struct_init(&discordrpc);
     discordrpc->state = DISCORDRPC_STATE_IDLE;
-    discordrpc_init();
+    rc = discordrpc_init();
+    if (rc != 0) {
+        return 1;
+    }
     discordrpc_update(&discordrpc);
     discordrpc_struct_deinit(&discordrpc);
 

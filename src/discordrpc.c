@@ -6,6 +6,7 @@
  * Note: This provides server auth creds (encoded) directly to Discord, could use Spotify's API instead??
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -57,7 +58,7 @@ static void handleDiscordError(int errcode, const char* message)
     printf("\nDiscord: error (%d: %s)\n", errcode, message);
 }
 
-void discordrpc_init() {
+int discordrpc_init() {
     printf("[DiscordRPC] Initializing...\n");
     DiscordEventHandlers handlers;
     memset(&handlers, 0, sizeof(handlers));
@@ -67,8 +68,12 @@ void discordrpc_init() {
     Discord_Initialize(discordrpc_appid, &handlers, 1, NULL);
 
     // Fetch OS String for RPC (Heap-allocated)
-    // TODO: Check if failed
     discordrpc_osString = discordrpc_getOS();
+    if (discordrpc_osString == NULL) {
+        logger_log_error(__func__, "asprintf() or strdup() failed.");
+        return 1;
+    }
+    return 0;
 }
 
 void discordrpc_update(discordrpc_data** discordrpc_struct) {
@@ -104,8 +109,6 @@ void discordrpc_update(discordrpc_data** discordrpc_struct) {
 char* discordrpc_getOS() {
 #if defined(__linux__)
     // NOTE: Could have made a sysctl function, but this is literally only done here, not worth it
-    // TODO: This is ONLY linux compatible at this point
-
     FILE* fp_ostype = fopen("/proc/sys/kernel/ostype", "r");
     char buf_ostype[16];
     if (!fp_ostype) {
@@ -211,6 +214,8 @@ char* discordrpc_getOS() {
     }
     return osString;
 #else
+    // NOTE: This is not a critical error, just let the user know
+    logger_log_error(__func__, "Could not fetch OS details.");
     return strdup("on Unknown");
 #endif
 }

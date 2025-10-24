@@ -29,6 +29,10 @@ guint bus_watch_id;
 GMainLoop* loop;
 bool isPlaying = false;
 
+static void gst_playbin3_sourcesetup_callback(GstElement* playbin, GstElement* source, gpointer udata) {
+    g_object_set(G_OBJECT(source), "user-agent", "OSSP/1.0 (avery@hojuix.org)", NULL);
+}
+
 static gboolean gst_bus_call(GstBus* bus, GstMessage* message, gpointer data) {
     GMainLoop* loop = (GMainLoop*)data;
 
@@ -148,7 +152,6 @@ void* OSSPlayer_ThrdInit(void*) {
             discordrpc_update(&discordrpc);
             discordrpc_struct_deinit(&discordrpc);
 
-            printf("%s\n", coverart_url->formedUrl);
             opensubsonic_httpClient_URL_cleanup(&coverart_url);
 
             opensubsonic_getSong_struct_free(&songStruct);
@@ -235,13 +238,14 @@ int OSSPlayer_GstInit() {
     gst_object_unref(sink_pad);
     gst_object_unref(src_pad);
 
-    // TEST - Setup playbin
+    // Setup playbin3 (Configure audio plugins and set user agent)
     g_object_set(playbin, "audio-filter", filter_bin, NULL);
+    g_signal_connect (playbin, "source-setup", G_CALLBACK(gst_playbin3_sourcesetup_callback), NULL);
 
-    // 000
+    // Add playbin3 to the pipeline
     gst_bin_add(GST_BIN(pipeline), playbin);
 
-    // Initialize in-volume
+    // Initialize in-volume (Volume before the audio reaches the plugins)
     g_object_set(in_volume, "volume", 0.175, NULL);
 
     // Initialize equalizer
@@ -309,6 +313,13 @@ int OSSPlayer_GstInit() {
 
         g_object_set(equalizer, "enabled", true, NULL);
     }
+
+    // Initialize pitch
+
+
+
+
+    // Initialize reverb
 }
 
 int OSSPlayer_GstDeInit() {

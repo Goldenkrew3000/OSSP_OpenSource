@@ -22,7 +22,7 @@ typedef struct {
 
 void discordrpc_struct_init(discordrpc_data** discordrpc_struct);
 void discordrpc_struct_deinit(discordrpc_data** discordrpc_struct);
-void discordrpc_init();
+int discordrpc_init();
 void discordrpc_update(discordrpc_data** discordrpc_struct);
 char* discordrpc_getOS();
 
