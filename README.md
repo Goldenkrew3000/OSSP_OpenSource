@@ -1,5 +1,4 @@
-# OSSP_OpenSource
-An effort to open-source OSSP
+# OSSP (OpenSubsonicPlayer)
 
 ## Notice
 OSSP is under heavy development and is NOT ready for daily use.<br>
@@ -24,6 +23,7 @@ OSSP has been privately tested under:
 - OpenBSD x86_64
 - iOS / macOS Catalyst aarch64
 - 32-bit platforms have major issues at this time
+OSSP itself is extremely portable, and should be usable on any UNIX®/Unix-like platform with little to no patching, but the Gstreamer player logic is less portable (Specifically LSP Plugins).
 
 ## Information
 The ```libopensubsonic``` library has been implemented as per the specification located at [OpenSubsonic Netlify](https://opensubsonic.netlify.app/docs/api-reference/)
