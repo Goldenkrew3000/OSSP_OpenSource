@@ -16,6 +16,7 @@
 #include "../libopensubsonic/logger.h"
 #include "../libopensubsonic/endpoint_getSong.h"
 #include "../libopensubsonic/httpclient.h"
+#include "playQueue.hpp"
 #include "player.h"
 
 extern configHandler_config_t* configObj;
@@ -103,6 +104,8 @@ void* OSSPlayer_GMainLoop(void*) {
 }
 
 void* OSSPlayer_ThrdInit(void*) {
+    bool haveIssuedDiscordRPCIdle = true;
+
     // Player init function for pthread entry
     logger_log_important(__func__, "Player thread running.");
     OSSPlayer_GstInit();
@@ -114,24 +117,21 @@ void* OSSPlayer_ThrdInit(void*) {
     // Poll play queue for new items to play
     while (true) { // TODO use global bool instead
         if (internal_OSSPQ_GetItemCount() != 0 && isPlaying == false) {
-            printf("IS VALID\n");
             // Player is not playing and a song is in the song queue
-            OSSPQ_SongStruct* pq = OSSPlayer_QueuePopFront();
-            if (pq == NULL) {
+
+            // Pull new song from the song queue
+            OSSPQ_SongStruct* songObject = OSSPlayer_QueuePopFront();
+            if (songObject == NULL) {
                 printf("FUCK\n");
                 // TODO: this
             }
 
-            char* id = strdup(pq->id);
-            //free(pq);
-
-            // NOTE: Using a few strdup()'s because the cleanup/deinit functions perform free's and to avoid UAFs/Double frees
-
-            // Fetch song information
+            // NOTE: Using a few strdup()'s because the cleanup/deinit functions perform free's so to avoid UAF's/Double free's
+            // Fetch song information from the /getSong endpoint
             opensubsonic_httpClient_URL_t* song_url = malloc(sizeof(opensubsonic_httpClient_URL_t));
             opensubsonic_httpClient_URL_prepare(&song_url);
             song_url->endpoint = OPENSUBSONIC_ENDPOINT_GETSONG;
-            song_url->id = strdup(id);
+            song_url->id = strdup(songObject->id);
             opensubsonic_httpClient_formUrl(&song_url);
             opensubsonic_getSong_struct* songStruct;
             opensubsonic_httpClient_fetchResponse(&song_url, (void**)&songStruct);
@@ -140,21 +140,24 @@ void* OSSPlayer_ThrdInit(void*) {
             opensubsonic_httpClient_URL_t* coverart_url = malloc(sizeof(opensubsonic_httpClient_URL_t));
             opensubsonic_httpClient_URL_prepare(&coverart_url);
             coverart_url->endpoint = OPENSUBSONIC_ENDPOINT_GETCOVERART;
-            coverart_url->id = strdup(id);
+            coverart_url->id = strdup(songObject->id);
             opensubsonic_httpClient_formUrl(&coverart_url);
 
-            // Update Discord RPC
+            // Prepare Discord RPC
             discordrpc_data* discordrpc = NULL;
             discordrpc_struct_init(&discordrpc);
             discordrpc->state = DISCORDRPC_STATE_PLAYING;
+            discordrpc->songLength = songStruct->duration;
             discordrpc->songTitle = strdup(songStruct->title);
             discordrpc->songArtist = strdup(songStruct->artist);
-            discordrpc->coverArtUrl = strdup(coverart_url->formedUrl);
+            //discordrpc->coverArtUrl = strdup(coverart_url->formedUrl);
             discordrpc_update(&discordrpc);
             discordrpc_struct_deinit(&discordrpc);
 
+            // Free the cover art URL
             opensubsonic_httpClient_URL_cleanup(&coverart_url);
 
+            // Free the /getSong info
             opensubsonic_getSong_struct_free(&songStruct);
             opensubsonic_httpClient_URL_cleanup(&song_url);
 
@@ -162,12 +165,37 @@ void* OSSPlayer_ThrdInit(void*) {
             opensubsonic_httpClient_URL_t* stream_url = malloc(sizeof(opensubsonic_httpClient_URL_t));
             opensubsonic_httpClient_URL_prepare(&stream_url);
             stream_url->endpoint = OPENSUBSONIC_ENDPOINT_STREAM;
-            stream_url->id = id;
+            stream_url->id = strdup(songObject->id);
             opensubsonic_httpClient_formUrl(&stream_url);
 
+            // Free song queue object
+            // TODO: Go through abstraction
+            internal_OSSPQ_FreeSongObject(songObject);
+
+            // Configure discord RPC idle boolean for when a song isn't playing
+            haveIssuedDiscordRPCIdle = false;
+
+            // Configure playbin3, free stream URL, send discord RPC, and start playing
             g_object_set(playbin, "uri", stream_url->formedUrl, NULL);
+            opensubsonic_httpClient_URL_cleanup(&stream_url);
             isPlaying = true;
             gst_element_set_state(pipeline, GST_STATE_PLAYING);
+        }
+
+        if (internal_OSSPQ_GetItemCount() == 0 && !isPlaying) {
+            // No song currently playing, and the queue is empty
+
+            // Only send idle Discord RPC if needed to avoid spamming
+            if (!haveIssuedDiscordRPCIdle) {
+                printf("Issuing idle Discord RPC\n");
+                haveIssuedDiscordRPCIdle = true;
+
+                discordrpc_data* discordrpc = NULL;
+                discordrpc_struct_init(&discordrpc);
+                discordrpc->state = DISCORDRPC_STATE_IDLE;
+                discordrpc_update(&discordrpc);
+                discordrpc_struct_deinit(&discordrpc);
+            }
         }
         usleep(200 * 1000);
     }

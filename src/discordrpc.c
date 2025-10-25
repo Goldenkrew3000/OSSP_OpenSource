@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "external/discord-rpc/include/discord_rpc.h"
 #include "libopensubsonic/logger.h"
 #include "configHandler.h"
@@ -87,11 +88,14 @@ void discordrpc_update(discordrpc_data** discordrpc_struct) {
         asprintf(&detailsString, "Idle");
         presence.details = detailsString;
     } else if ((*discordrpc_struct)->state == DISCORDRPC_STATE_PLAYING) {
+        time_t currentTime = time(NULL);
         asprintf(&detailsString, "%s", (*discordrpc_struct)->songTitle);
         asprintf(&stateString, "by %s", (*discordrpc_struct)->songArtist);
         presence.details = detailsString;
         presence.state = stateString;
         presence.largeImageKey = (*discordrpc_struct)->coverArtUrl;
+        presence.startTimestamp = (long)currentTime;
+        presence.endTimestamp = (long)currentTime + (*discordrpc_struct)->songLength;
         if (configObj->discordrpc_showSysDetails) {
             presence.largeImageText = discordrpc_osString;
         }
