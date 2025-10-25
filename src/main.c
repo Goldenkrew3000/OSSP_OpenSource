@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
     discordrpc_struct_deinit(&discordrpc);
 
     // Launch QT frontend
-    qt_gui_entry(argc, argv);
+    gui_entry();
 
     // Cleanup and exit
     configHandler_Free(&configObj);

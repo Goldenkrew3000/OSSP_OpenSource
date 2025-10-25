@@ -23,7 +23,7 @@ bool bAudioSettingsShow = false;
 void showLikedSongs();
 void showAudioSettings();
 
-int qt_gui_entry(int argc, char** argv) {
+int gui_entry() {
     // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0) {
         printf("SDL could not be initialized: %s\n", SDL_GetError());
@@ -196,19 +196,37 @@ void showLikedSongs() {
 }
 
 float in_volume_val = 0;
+float out_volume_val = 0;
+float pitch_val = 0;
 bool hasInVolumeFirstRun = false;
 void showAudioSettings() {
     ImGui::Begin("Audio Settings");
 
     if (!hasInVolumeFirstRun) {
         in_volume_val = OSSPlayer_GstECont_InVolume_Get();
+        out_volume_val = OSSPlayer_GstECont_OutVolume_Get();
+        pitch_val = configObj->audio_pitch_cents / 100.0f; // Cents to semitones
         hasInVolumeFirstRun = true;
     }
 
+    ImGui::Text("In Vol / Out Vol");
+
     // Idk what that field is, styling?, Size, Storage, Low, High
-    if (ImGui::VSliderFloat("##v", ImVec2(35, 160), &in_volume_val, 0.0f, 1.0f)) {
+    if (ImGui::VSliderFloat("##invol", ImVec2(35, 160), &in_volume_val, 0.0f, 1.0f)) {
         // Data has changed
         OSSPlayer_GstECont_InVolume_set(in_volume_val);
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::VSliderFloat("##outvol", ImVec2(35, 160), &out_volume_val, 0.0f, 1.0f)) {
+        OSSPlayer_GstECont_OutVolume_set(out_volume_val);
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::VSliderFloat("##pitch", ImVec2(35, 160), &pitch_val, -6.00f, 6.00f)) {
+        OSSPlayer_GstECont_Pitch_Set(pitch_val * 100.0f); // Convert semitones to cents
     }
 
     ImGui::End();

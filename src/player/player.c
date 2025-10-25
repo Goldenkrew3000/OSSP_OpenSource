@@ -22,7 +22,7 @@
 
 extern configHandler_config_t* configObj;
 static int rc = 0;
-GstElement *pipeline, *playbin, *filter_bin, *conv_in, *conv_out, *in_volume, *equalizer, *pitch, *reverb;
+GstElement *pipeline, *playbin, *filter_bin, *conv_in, *conv_out, *in_volume, *equalizer, *pitch, *reverb, *out_volume;
 GstPad *sink_pad, *src_pad;
 GstBus* bus;
 guint bus_watch_id;
@@ -216,6 +216,7 @@ int OSSPlayer_GstInit() {
         // Calf Studio Plugins Reverb
         reverb = gst_element_factory_make(configObj->lv2_reverb_filter_name, "reverb");
     }
+    out_volume = gst_element_factory_make("volume", "out-volume");
     // TODO: Make better error messages for here, and exit out early
     if (!equalizer) {
         logger_log_error(__func__, "Could not initialize equalizer.");
@@ -229,8 +230,8 @@ int OSSPlayer_GstInit() {
 
     // Add and link elements to the filter bin
     // TODO: Check creation and dynamic as per config
-    gst_bin_add_many(GST_BIN(filter_bin), conv_in, in_volume, equalizer, conv_out, NULL);
-    gst_element_link_many(conv_in, in_volume, equalizer, conv_out, NULL);
+    gst_bin_add_many(GST_BIN(filter_bin), conv_in, in_volume, equalizer, pitch, out_volume, conv_out, NULL);
+    gst_element_link_many(conv_in, in_volume, equalizer, pitch, out_volume, conv_out, NULL);
     sink_pad = gst_element_get_static_pad(conv_in, "sink");
     src_pad = gst_element_get_static_pad(conv_out, "src");
     gst_element_add_pad(filter_bin, gst_ghost_pad_new("sink", sink_pad));
@@ -240,13 +241,16 @@ int OSSPlayer_GstInit() {
 
     // Setup playbin3 (Configure audio plugins and set user agent)
     g_object_set(playbin, "audio-filter", filter_bin, NULL);
-    g_signal_connect (playbin, "source-setup", G_CALLBACK(gst_playbin3_sourcesetup_callback), NULL);
+    g_signal_connect(playbin, "source-setup", G_CALLBACK(gst_playbin3_sourcesetup_callback), NULL);
 
     // Add playbin3 to the pipeline
     gst_bin_add(GST_BIN(pipeline), playbin);
 
     // Initialize in-volume (Volume before the audio reaches the plugins)
     g_object_set(in_volume, "volume", 0.175, NULL);
+
+    // Initialize out-volume (Volume after the audio plugins)
+    g_object_set(out_volume, "volume", 1.00, NULL);
 
     // Initialize equalizer
     if (configObj->audio_equalizer_enable) {
@@ -296,7 +300,7 @@ int OSSPlayer_GstInit() {
                 g_object_set(equalizer, fl_name, freq, NULL);
                 g_object_set(equalizer, fr_name, freq, NULL);
             } else {
-                printf("EQ band %d - F: %.2f / G: %.2f / Q: 4.36\n", i + 1, (float)configObj->audio_equalizer_graph[i].frequency, gain);
+                printf("EQ band %d - F: %.2f(Nfp) / G: %.2f / Q: 4.36\n", i + 1, (float)configObj->audio_equalizer_graph[i].frequency, gain);
                 g_object_set(equalizer, fl_name, (float)configObj->audio_equalizer_graph[i].frequency, NULL);
                 g_object_set(equalizer, fr_name, (float)configObj->audio_equalizer_graph[i].frequency, NULL);
             }
@@ -315,9 +319,11 @@ int OSSPlayer_GstInit() {
     }
 
     // Initialize pitch
-
-
-
+    if (configObj->audio_pitch_enable) {
+        float scaleFactor = OSSPlayer_CentsToPSF(configObj->audio_pitch_cents);
+        printf("Pitch Cents: %.2f, Scale factor: %.6f\n", configObj->audio_pitch_cents, scaleFactor);
+        g_object_set(pitch, "pitch", scaleFactor, NULL);
+    }
 
     // Initialize reverb
 }
@@ -348,6 +354,7 @@ char* OSSPlayer_QueuePopFront() {
 /*
  * Gstreamer Element Control Functions
  */
+// TODO: Consolidate volume functions?
 float OSSPlayer_GstECont_InVolume_Get() {
     gdouble vol;
     g_object_get(in_volume, "volume", &vol, NULL);
@@ -356,6 +363,25 @@ float OSSPlayer_GstECont_InVolume_Get() {
 
 void OSSPlayer_GstECont_InVolume_set(float val) {
     g_object_set(in_volume, "volume", val, NULL);
+}
+
+float OSSPlayer_GstECont_OutVolume_Get() {
+    gdouble vol;
+    g_object_get(out_volume, "volume", &vol, NULL);
+    return (float)vol;
+}
+
+void OSSPlayer_GstECont_OutVolume_set(float val) {
+    g_object_set(out_volume, "volume", val, NULL);
+}
+
+float OSSPlayer_GstECont_Pitch_Get() {
+    //
+}
+
+void OSSPlayer_GstECont_Pitch_Set(float cents) {
+    float psf = OSSPlayer_CentsToPSF(cents);
+    g_object_set(pitch, "pitch", psf, NULL);
 }
 
 /*
@@ -369,4 +395,10 @@ float OSSPlayer_DbLinMul(float db) {
 float OSSPlayer_PitchFollow(float freq, float semitone) {
     // Calculate new EQ frequency from semitone adjustment
     return freq * pow(2.0, semitone / 12.0);
+}
+
+float OSSPlayer_CentsToPSF(float cents) {
+    // Convert Cents to a Pitch Scale Factor
+    float semitone = cents / 100.0;
+    return pow(2, (semitone / 12.0f));
 }

@@ -11,7 +11,7 @@
 extern "C" {
 #endif // __cplusplus
 
-int qt_gui_entry(int argc, char** argv);
+int gui_entry();
 
 #ifdef __cplusplus
 }
