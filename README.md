@@ -23,7 +23,7 @@ OSSP has been privately tested under:
 - OpenBSD x86_64
 - iOS / macOS Catalyst aarch64
 - 32-bit platforms have major issues at this time
-<br>
+
 OSSP itself is extremely portable, and should be usable on any UNIX®/Unix-like platform with little to no patching, but the Gstreamer player logic is less portable (Specifically LSP Plugins).
 
 ## Information
