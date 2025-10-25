@@ -11,11 +11,13 @@
 extern "C" {
 #endif
 
+#include "playQueue.hpp"
+
 void* OSSPlayer_GMainLoop(void*);
 void* OSSPlayer_ThrdInit(void*);
 int OSSPlayer_GstInit();
-int OSSPlayer_QueueAppend(char* id);
-char* OSSPlayer_QueuePopFront();
+int OSSPlayer_QueueAppend(char* title, char* artist, char* id, long duration);
+OSSPQ_SongStruct* OSSPlayer_QueuePopFront();
 
 float OSSPlayer_GstECont_InVolume_Get();
 void OSSPlayer_GstECont_InVolume_set(float val);

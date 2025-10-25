@@ -11,8 +11,18 @@
 extern "C" {
 #endif // __cplusplus
 
-int internal_OSSPQ_AppendToEnd(char* id);
-char* internal_OSSPQ_PopFromFront();
+// C interface for sending song queue data (C++ interface is in the C++ file)
+typedef struct {
+    char* title;
+    char* artist;
+    char* id;
+    long duration;
+} OSSPQ_SongStruct;
+
+int internal_OSSPQ_AppendToEnd(char* title, char* artist, char* id, long duration);
+OSSPQ_SongStruct* internal_OSSPQ_PopFromFront();
+void internal_OSSPQ_FreeSongObject(OSSPQ_SongStruct* songObject);
+char* internal_OSSPQ_GetTitleAtIndex(int idx);
 int internal_OSSPQ_GetItemCount();
 
 #ifdef __cplusplus

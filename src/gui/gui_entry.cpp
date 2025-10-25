@@ -20,8 +20,10 @@
 extern configHandler_config_t* configObj;
 bool bLikedSongsShow = false;
 bool bAudioSettingsShow = false;
+bool bPlayQueueShow = false;
 void showLikedSongs();
 void showAudioSettings();
+void showPlayQueue();
 
 int gui_entry() {
     // Initialize SDL
@@ -104,6 +106,12 @@ int gui_entry() {
                 bAudioSettingsShow = true;
             }
 
+            ImGui::SameLine();
+
+            if (ImGui::Button("Play Queue")) {
+                bPlayQueueShow = true;
+            }
+
             ImGui::End();
         }
 
@@ -113,6 +121,10 @@ int gui_entry() {
 
         if (bAudioSettingsShow) {
             showAudioSettings();
+        }
+
+        if (bPlayQueueShow) {
+            showPlayQueue();
         }
 
         // Render
@@ -186,9 +198,10 @@ void showLikedSongs() {
     }
 
     if (selectedSong != -1) {
-        printf("Song: %s (%s)\n", starredStruct->songs[selectedSong].title,
-            starredStruct->songs[selectedSong].id);
-        OSSPlayer_QueueAppend(starredStruct->songs[selectedSong].id);
+        OSSPlayer_QueueAppend(starredStruct->songs[selectedSong].title,
+                              starredStruct->songs[selectedSong].artist,
+                              starredStruct->songs[selectedSong].id,
+                              starredStruct->songs[selectedSong].duration);
         selectedSong = -1;
     }
 
@@ -228,6 +241,25 @@ void showAudioSettings() {
     if (ImGui::VSliderFloat("##pitch", ImVec2(35, 160), &pitch_val, -6.00f, 6.00f)) {
         OSSPlayer_GstECont_Pitch_Set(pitch_val * 100.0f); // Convert semitones to cents
     }
+
+    ImGui::End();
+}
+
+// TODO: go through abstraction
+#include "../player/playQueue.hpp"
+
+void showPlayQueue() {
+    ImGui::Begin("Play Queue");
+
+    static int selectedSong = -1;
+            if (ImGui::BeginChild("Play Queue", ImVec2(0, 200), ImGuiChildFlags_Border)) {
+                for (int i = 0; i < internal_OSSPQ_GetItemCount(); i++) {
+                    if (ImGui::Selectable(internal_OSSPQ_GetTitleAtIndex(i), selectedSong == i)) {
+                        selectedSong = i;
+                    }
+                }
+            ImGui::EndChild();
+            }
 
     ImGui::End();
 }

@@ -10,15 +10,13 @@
 #include <math.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include <unistd.h>
 #include "../configHandler.h"
 #include "../discordrpc.h"
 #include "../libopensubsonic/logger.h"
 #include "../libopensubsonic/endpoint_getSong.h"
 #include "../libopensubsonic/httpclient.h"
-#include "playQueue.hpp"
 #include "player.h"
-
-#include <unistd.h> // For worse sleep TODO
 
 extern configHandler_config_t* configObj;
 static int rc = 0;
@@ -118,11 +116,14 @@ void* OSSPlayer_ThrdInit(void*) {
         if (internal_OSSPQ_GetItemCount() != 0 && isPlaying == false) {
             printf("IS VALID\n");
             // Player is not playing and a song is in the song queue
-            char* id = OSSPlayer_QueuePopFront();
-            if (id == NULL) {
+            OSSPQ_SongStruct* pq = OSSPlayer_QueuePopFront();
+            if (pq == NULL) {
                 printf("FUCK\n");
                 // TODO: this
             }
+
+            char* id = strdup(pq->id);
+            //free(pq);
 
             // NOTE: Using a few strdup()'s because the cleanup/deinit functions perform free's and to avoid UAFs/Double frees
 
@@ -168,7 +169,7 @@ void* OSSPlayer_ThrdInit(void*) {
             isPlaying = true;
             gst_element_set_state(pipeline, GST_STATE_PLAYING);
         }
-        usleep(200 * 1000); // Use futex and signals instead of this TODO
+        usleep(200 * 1000);
     }
 }
 
@@ -254,8 +255,6 @@ int OSSPlayer_GstInit() {
 
     // Initialize equalizer
     if (configObj->audio_equalizer_enable) {
-        printf("Initializing %d equalizer bands...\n", configObj->audio_equalizer_graphCount);
-
         // Dynamically append settings to the equalizer to match the config file
         for (int i = 0; i < configObj->audio_equalizer_graphCount; i++) {
             char* ftl_name = NULL;
@@ -335,20 +334,22 @@ int OSSPlayer_GstDeInit() {
 /*
  * Player Queue Control Functions
  */
-int OSSPlayer_QueueAppend(char* id) {
+int OSSPlayer_QueueAppend(char* title, char* artist, char* id, long duration) {
     // Call to C++ function
-    internal_OSSPQ_AppendToEnd(id);
+    // Note: I would receive a song struct instead of individual elements, but it would significantly slow down the GUI
+    internal_OSSPQ_AppendToEnd(title, artist, id, duration);
 }
 
-char* OSSPlayer_QueuePopFront() {
+OSSPQ_SongStruct* OSSPlayer_QueuePopFront() {
     // Call to C++ function
-    // NOTE: 'id' is heap-allocated from C++
-    char* id = internal_OSSPQ_PopFromFront();
-    if (id == NULL) {
+
+    OSSPQ_SongStruct* songObject = internal_OSSPQ_PopFromFront();
+
+    if (songObject == NULL) {
         // Queue is empty TODO
         printf("FUCKFUCKFUCK\n");
     }
-    return id;
+    return songObject;
 }
 
 /*
