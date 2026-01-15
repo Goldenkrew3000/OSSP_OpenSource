@@ -51,7 +51,7 @@ static gboolean gst_bus_call(GstBus* bus, GstMessage* message, gpointer data) {
             gchar* debug;
             GError* error;
             gst_message_parse_error(message, &error, &debug);
-            printf("Gstreamer Error: %s\n", error);
+            printf("Gstreamer Error: %s\n", error->message);
             g_error_free(error);
             g_free(debug);
             break;
@@ -150,7 +150,9 @@ void* OSSPlayer_ThrdInit(void*) {
             discordrpc->songLength = songStruct->duration;
             discordrpc->songTitle = strdup(songStruct->title);
             discordrpc->songArtist = strdup(songStruct->artist);
-            //discordrpc->coverArtUrl = strdup(coverart_url->formedUrl);
+            if (configObj->discordrpc_showCoverArt) {
+                discordrpc->coverArtUrl = strdup(coverart_url->formedUrl);
+            }
             discordrpc_update(&discordrpc);
             discordrpc_struct_deinit(&discordrpc);
 

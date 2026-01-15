@@ -47,6 +47,7 @@ int configHandler_Read(configHandler_config_t** configObj) {
     (*configObj)->discordrpc_enable = false;
     (*configObj)->discordrpc_method = 0;
     (*configObj)->discordrpc_showSysDetails = false;
+    (*configObj)->discordrpc_showCoverArt = false;
     (*configObj)->audio_equalizer_enable = false;
     (*configObj)->audio_equalizer_followPitch = false;
     (*configObj)->audio_equalizer_graphCount = 0;
@@ -248,6 +249,13 @@ int configHandler_Read(configHandler_config_t** configObj) {
     if (cJSON_IsBool(discordrpc_showSysDetails)) {
         if (cJSON_IsTrue(discordrpc_showSysDetails)) {
             (*configObj)->discordrpc_showSysDetails = true;
+        }
+    }
+
+    cJSON* discordrpc_showCoverArt = cJSON_GetObjectItemCaseSensitive(discordrpc_root, "showCoverArt");
+    if (cJSON_IsBool(discordrpc_showCoverArt)) {
+        if (cJSON_IsTrue(discordrpc_showCoverArt)) {
+            (*configObj)->discordrpc_showCoverArt = true;
         }
     }
 

@@ -40,6 +40,7 @@ typedef struct {
     bool discordrpc_enable;             // Enable Discord RPC
     int discordrpc_method;              // Discord RPC Method (0 = Regular, 1 = DscrdRPC)
     bool discordrpc_showSysDetails;     // Show 'on OS ARCH VERSION' in RPC
+    bool discordrpc_showCoverArt;       // Show cover art instead of app icon (Leaks credentials to Discord)
 
     // Audio Settings
     bool audio_equalizer_enable;
@@ -62,7 +63,7 @@ typedef struct {
     char* lv2_parax32_quality_right;
     char* lv2_parax32_frequency_left;
     char* lv2_parax32_frequency_right;
-    char* lv2_reverb_filter_name;       // LV2 Calf Reeverb LV2 Name
+    char* lv2_reverb_filter_name;       // LV2 Calf Reverb LV2 Name
 } configHandler_config_t;
 
 int configHandler_Read(configHandler_config_t** config);
