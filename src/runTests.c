@@ -19,6 +19,7 @@
 #include "libopensubsonic/endpoint_getAlbumList.h"
 #include "libopensubsonic/endpoint_getAlbum.h"
 #include "libopensubsonic/endpoint_getLyricsBySongId.h"
+#include "libopensubsonic/endpoint_getInternetRadioStations.h"
 
 configHandler_config_t* configObj = NULL;
 
@@ -179,6 +180,21 @@ void test_libopensubsonic_endpoint_getLyricsBySongId(void) {
     opensubsonic_httpClient_URL_cleanup(&url);
 }
 
+void test_libopensubsonic_endpoint_getInternetRadioStations(void) {
+    logger_log_general(__func__, "Testing getInternetRadioStations endpoint.");
+
+    opensubsonic_httpClient_URL_t* url = malloc(sizeof(opensubsonic_httpClient_URL_t));
+    opensubsonic_httpClient_URL_prepare(&url);
+    url->endpoint = OPENSUBSONIC_ENDPOINT_GETINTERNETRADIOSTATIONS;
+    opensubsonic_httpClient_formUrl(&url);
+    
+    opensubsonic_getInternetRadioStations_struct* getInternetRadioStationsStruct;
+    opensubsonic_httpClient_fetchResponse(&url, (void**)&getInternetRadioStationsStruct);
+
+    opensubsonic_getInternetRadioStations_struct_free(&getInternetRadioStationsStruct);
+    opensubsonic_httpClient_URL_cleanup(&url);
+}
+
 int main(void) {
     int rc = 0;
 
@@ -200,6 +216,7 @@ int main(void) {
     test_libopensubsonic_endpoint_getAlbumList();
     test_libopensubsonic_endpoint_getAlbum();
     test_libopensubsonic_endpoint_getLyricsBySongId();
+    test_libopensubsonic_endpoint_getInternetRadioStations();
     
     // Free config file
     configHandler_Free(&configObj);

@@ -17,4 +17,5 @@ gcc runTests.c \
     libopensubsonic/endpoint_getAlbumList.c \
     libopensubsonic/endpoint_getStarred.c \
     libopensubsonic/endpoint_scrobble.c \
+    libopensubsonic/endpoint_getInternetRadioStations.c \
     -o tests -lcurl

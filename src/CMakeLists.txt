@@ -24,6 +24,7 @@ add_executable(ossp MACOSX_BUNDLE
     main.c
     configHandler.c
     discordrpc.c
+    localRadioDBHandler.c
     gui/gui_entry.cpp
     player/player.c
     player/playQueue.cpp
@@ -44,6 +45,7 @@ add_executable(ossp MACOSX_BUNDLE
     libopensubsonic/endpoint_getStarred.c
     libopensubsonic/endpoint_ping.c
     libopensubsonic/endpoint_scrobble.c
+    libopensubsonic/endpoint_getInternetRadioStations.c
     external/cJSON.c
     external/cJSON_Utils.c
     external/libcurl_uriescape.c
@@ -55,6 +57,7 @@ add_executable(ossp MACOSX_BUNDLE
     external/imgui/imgui_demo.cpp
     external/imgui/backends/imgui_impl_sdl2.cpp
     external/imgui/backends/imgui_impl_opengl2.cpp
+    external/sqlite3/sqlite3.c
 )
 
 set_target_properties(ossp PROPERTIES

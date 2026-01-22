@@ -19,6 +19,7 @@
 #include "endpoint_getAlbumList.h"
 #include "endpoint_getAlbum.h"
 #include "endpoint_scrobble.h"
+#include "endpoint_getInternetRadioStations.h"
 
 static int rc = 0;
 extern configHandler_config_t* configObj;
@@ -214,6 +215,12 @@ void opensubsonic_httpClient_formUrl(opensubsonic_httpClient_URL_t** urlObj) {
                           (*urlObj)->id, submitString);
             free(submitString);
             break;
+        case OPENSUBSONIC_ENDPOINT_GETINTERNETRADIOSTATIONS:
+            rc = asprintf(&url, "%s://%s/rest/getInternetRadioStations?u=%s&t=%s&s=%s&f=json&v=%s&c=%s",
+                          configObj->opensubsonic_protocol, configObj->opensubsonic_server, configObj->opensubsonic_username,
+                          configObj->internal_opensubsonic_loginToken, configObj->internal_opensubsonic_loginSalt,
+                          configObj->internal_opensubsonic_version, configObj->internal_opensubsonic_clientName);
+            break;
         default:
             logger_log_error(__func__, "Unknown endpoint requested.");
             break;
@@ -270,6 +277,9 @@ void opensubsonic_httpClient_fetchResponse(opensubsonic_httpClient_URL_t** urlOb
     } else if ((*urlObj)->endpoint == OPENSUBSONIC_ENDPOINT_SCROBBLE) {
         opensubsonic_scrobble_struct** scrobbleStruct = (opensubsonic_scrobble_struct**)responseObj;
         opensubsonic_scrobble_parse(httpReq->responseMsg, scrobbleStruct);
+    } else if ((*urlObj)->endpoint == OPENSUBSONIC_ENDPOINT_GETINTERNETRADIOSTATIONS) {
+        opensubsonic_getInternetRadioStations_struct** getInternetRadioStationsStruct = (opensubsonic_getInternetRadioStations_struct**)responseObj;
+        opensubsonic_getInternetRadioStations_parse(httpReq->responseMsg, getInternetRadioStationsStruct);
     } else {
         logger_log_error(__func__, "Unknown endpoint requested.");
     }
