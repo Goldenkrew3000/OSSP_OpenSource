@@ -4,20 +4,45 @@
 #include "../configHandler.h"
 #include "logger.h"
 
+// If the platform is Linux, but the libc isn't Glibc, assume Musl C
+// Yes, I know this ignores the existence of others such as Mlibc or Uclibc, but
+// Musl C doesn't define a precompiler macro to be identified, and this works for now
+#if defined(__linux__) && !defined(__GLIBC__)
+#define __MUSL__
+#endif
+
 #if __NetBSD__ // Functions for NetBSD to use KERN_ARND
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#endif
+
+#if defined(__MUSL__) // Musl C does not contain arc4random(), use Linux getrandom() instead
+#include <sys/random.h>
 #endif
 
 static int rc = 0;
 extern configHandler_config_t* configObj;
 
 // Use arc4random() to generate cryptographically secure bytes. Should work on all BSD-style systems
+#if !defined(__MUSL__) // If not Musl
 void crypto_secure_arc4random_generate(unsigned char* bytes, size_t length) {
     for (size_t i = 0; i < length; i++) {
         bytes[i] = arc4random() & 0xFF;
     }
 }
+#endif
+
+// Use getrandom() instead of arc4random() for Musl C Linux
+#if defined(__MUSL__)
+void crypto_secure_getrandom_generate(unsigned char* bytes, size_t length) {
+    if (getrandom(bytes, length, 0) != length) {
+        printf("[libopensubsonic/crypto] getrandom() failed. Using insecure bytes.\n");
+        for (size_t i = 0; i < length; i++) {
+            bytes[i] = 0xFF;
+        }
+    }
+}
+#endif
 
 // Use the arandom sysctl on NetBSD to generate cryptographically secure bytes.
 #if __NetBSD__
@@ -43,7 +68,11 @@ void crypto_secure_generate_salt(void) {
 #if __NetBSD__
     crypto_secure_netbsd_arandom_generate(salt_bytes, 8);
 #else
+#if defined(__MUSL__)
+    crypto_secure_getrandom_generate(salt_bytes, 8);
+#else
     crypto_secure_arc4random_generate(salt_bytes, 8);
+#endif
 #endif
 
     // Convert to a string hex representation
