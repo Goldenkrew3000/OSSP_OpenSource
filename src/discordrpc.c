@@ -60,7 +60,7 @@ static void handleDiscordError(int errcode, const char* message)
 }
 
 int discordrpc_init() {
-    printf("[DiscordRPC] Initializing...\n");
+    printf("[DiscordRPC] Initializing.\n");
     DiscordEventHandlers handlers;
     memset(&handlers, 0, sizeof(handlers));
     handlers.ready = handleDiscordReady;
@@ -87,7 +87,8 @@ void discordrpc_update(discordrpc_data** discordrpc_struct) {
     if ((*discordrpc_struct)->state == DISCORDRPC_STATE_IDLE) {
         asprintf(&detailsString, "Idle");
         presence.details = detailsString;
-    } else if ((*discordrpc_struct)->state == DISCORDRPC_STATE_PLAYING) {
+    } else if ((*discordrpc_struct)->state == DISCORDRPC_STATE_PLAYING_SONG) {
+        // Playing a song
         time_t currentTime = time(NULL);
         asprintf(&detailsString, "%s", (*discordrpc_struct)->songTitle);
         asprintf(&stateString, "by %s", (*discordrpc_struct)->songArtist);
@@ -96,6 +97,18 @@ void discordrpc_update(discordrpc_data** discordrpc_struct) {
         presence.largeImageKey = (*discordrpc_struct)->coverArtUrl;
         presence.startTimestamp = (long)currentTime;
         presence.endTimestamp = (long)currentTime + (*discordrpc_struct)->songLength;
+        if (configObj->discordrpc_showSysDetails) {
+            presence.largeImageText = discordrpc_osString;
+        }
+    } else if ((*discordrpc_struct)->state == DISCORDRPC_STATE_PLAYING_RADIO) {
+        // Playing an internet radio station
+        time_t currentTime = time(NULL);
+        asprintf(&detailsString, "%s", (*discordrpc_struct)->songTitle);
+        asprintf(&stateString, "Internet radio station");
+        presence.details = detailsString;
+        presence.state = stateString;
+        presence.largeImageKey = (*discordrpc_struct)->coverArtUrl;
+        presence.startTimestamp = (long)currentTime;
         if (configObj->discordrpc_showSysDetails) {
             presence.largeImageText = discordrpc_osString;
         }

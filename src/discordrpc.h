@@ -8,8 +8,9 @@
 #define _DISCORDRPC_H
 
 #define DISCORDRPC_STATE_IDLE 0
-#define DISCORDRPC_STATE_PLAYING 1
-#define DISCORDRPC_STATE_PAUSED 2
+#define DISCORDRPC_STATE_PLAYING_SONG 1
+#define DISCORDRPC_STATE_PLAYING_RADIO 2
+#define DISCORDRPC_STATE_PAUSED 4
 
 typedef struct {
     int state;
@@ -17,6 +18,7 @@ typedef struct {
     char* songTitle;
     char* songArtist;
     char* coverArtUrl;
+    int isRadio;
 } discordrpc_data;
 
 
