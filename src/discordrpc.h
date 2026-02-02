@@ -18,7 +18,6 @@ typedef struct {
     char* songTitle;
     char* songArtist;
     char* coverArtUrl;
-    int isRadio;
 } discordrpc_data;
 
 

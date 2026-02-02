@@ -17,7 +17,7 @@ Discord RPC Settings:
 Enable ('enable') - 'true' to enable Discord RPC or 'false' to disable it
 Method ('method'):
     - Method '0' is the official local Discord RPC method, local application to local discord client
-    - Method '1' is a VERY buggy and in-development RPC method that uses a client-server model
+    - DO NOT USE: Method '1' is a VERY buggy and in-development RPC method that uses a client-server model
                  to allow Discord RPC from a mobile device securely
 Show System Details ('showSystemDetails') - 'true' or 'false'
     - Want to show off / Got bragging rights on your _unique_ system?? Well this is perfect for you!
@@ -25,3 +25,20 @@ Show System Details ('showSystemDetails') - 'true' or 'false'
       Example: 'on Linux x86_64 6.17.1-arch1-1' will be shown in the RPC dialog
       Go on, don't be shy, show everyone you somehow have Discord and OSSP running on fucking s390x!!!
     - Setting this to 'false' will simply instead show what playlist you are playing.
+Show Cover Art ('showCoverArt') - 'true' or 'false'
+    - If this is set to true, the cover art for the song playing will be shown on the Discord rich presence.
+      This can be disabled because the OpenSubsonic API does not have an unauthenticated way of accessing
+      album art from a server, which means you have to leak an authenticated server URL to Discord (Which
+      a lot of people would not feel comfortable doing, understandably).
+    - If this is set to false, Discord rich presence only shows the app icon, and does not leak any authenticated
+      URLs to Discord servers
+
+
+
+Radio Sqlite3 Database Drafting:
+Location: $HOME/.config/ossp/radio.db
+
+Table: stations
+ - Int: id
+ - String: name
+ - String: url
