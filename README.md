@@ -1,5 +1,11 @@
 # OSSP (OpenSubsonicPlayer)
 
+## AI Notice
+This project does not have ANY AI code other than a few snippets that will be removed in the future.<br>
+Yes I comment a LOT, and unfortunately this has become a red flag for excessive AI use.<br>
+I am a forgetful person, and have a habit of dropping projects for months at a time, so having
+many comments allows me to come back and instantly understand what I was doing.<br>
+
 ## Notice
 OSSP is under heavy development and is NOT ready for daily use.<br>
 Also, I am NOT RESPONSIBLE if you damage your hearing and/or any of your equipment using OSSP.<br>
