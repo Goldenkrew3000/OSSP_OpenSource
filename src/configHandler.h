@@ -25,6 +25,7 @@ typedef struct {
     char* internal_opensubsonic_clientName;     // (Internal) Opensubsonic Client Name
     char* internal_opensubsonic_loginSalt;      // (Internal) Opensubsonic Login Salt
     char* internal_opensubsonic_loginToken;     // (Internal) Opensubsonic Login Token
+    char* internal_ossp_version;                // (Internal) OSSP Version
 
     // Scrobbler Settings
     bool listenbrainz_enable;           // Enable ListenBrainz Scrobbling

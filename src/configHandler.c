@@ -36,6 +36,7 @@ int configHandler_Read(configHandler_config_t** configObj) {
     (*configObj)->internal_opensubsonic_clientName = NULL;
     (*configObj)->internal_opensubsonic_loginSalt = NULL;
     (*configObj)->internal_opensubsonic_loginToken = NULL;
+    (*configObj)->internal_ossp_version = NULL;
     (*configObj)->listenbrainz_enable = false;
     (*configObj)->listenbrainz_token = NULL;
     (*configObj)->lastfm_enable = false;
@@ -71,6 +72,7 @@ int configHandler_Read(configHandler_config_t** configObj) {
     // Set internal configuration values
     (*configObj)->internal_opensubsonic_version = strdup("1.8.0");
     (*configObj)->internal_opensubsonic_clientName = strdup("Hojuix_OSSP");
+    (*configObj)->internal_ossp_version = strdup("v0.4a");
 
     // Form the path to the config JSON
     char* config_path = NULL;
@@ -477,6 +479,7 @@ void configHandler_Free(configHandler_config_t** configObj) {
     if ((*configObj)->internal_opensubsonic_clientName != NULL) { free((*configObj)->internal_opensubsonic_clientName); }
     if ((*configObj)->internal_opensubsonic_loginSalt != NULL) { free((*configObj)->internal_opensubsonic_loginSalt); }
     if ((*configObj)->internal_opensubsonic_loginToken != NULL) { free((*configObj)->internal_opensubsonic_loginToken); }
+    if ((*configObj)->internal_ossp_version != NULL) { free((*configObj)->internal_ossp_version); }
     if ((*configObj)->listenbrainz_token != NULL) { free((*configObj)->listenbrainz_token); }
     if ((*configObj)->lastfm_username != NULL) { free((*configObj)->lastfm_username); }
     if ((*configObj)->lastfm_password != NULL) { free((*configObj)->lastfm_password); }
