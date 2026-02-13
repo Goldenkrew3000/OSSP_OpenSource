@@ -19,6 +19,7 @@ extern "C" {
     #include "external/sqlite3/sqlite3.h"
 }
 #include <iostream>
+#include <regex>
 #include <vector>
 #include <deque>
 #include "configHandler.h"
@@ -48,6 +49,7 @@ static sqlite3* sqlite_db = NULL;
 static char* sqlite_errorMsg = NULL;
 
 void localMusicHandler_scan() {
+    static int rc = 0;
     printf("[LocalMusicHandler] Scanning local music directory recursively for files.\n");
 
     // TODO clear all vectors
@@ -71,15 +73,17 @@ void localMusicHandler_scan() {
     }
 
     // Store in database
-
-
-    localMusicHandler_initDatabase();
-
-    for (int i = 0; i < localMusicHandler_audioItems.size(); i++) {
-        localMusicHandler_moveSongsToDatabase(i);
+    rc = localMusicHandler_initDatabase();
+    if (rc == -1) {
+        // ERROR
+    } else if (rc == 0) {
+        // Table just made, songs not loaded in yet
+        for (int i = 0; i < localMusicHandler_audioItems.size(); i++) {
+            localMusicHandler_moveSongsToDatabase(i);
+        }
+    } else if (rc == 1) {
+        // Table was already made, assume songs were loaded in before
     }
-    //localMusicHandler_moveSongsToDatabase(0);
-    printf("DOINEDONEODNE\n");
 }
 
 void localMusicHandler_scanDirectory(char* directory) {
@@ -118,8 +122,9 @@ void localMusicHandler_scanFile(int idx) {
 
     // Ignore files that aren't audio
     if (
-        strcmp(ctx->iformat->name, "lrc") == 0 ||   // .lrc files
-        strcmp(ctx->iformat->name, "image2") == 0   // Pictures
+        strcmp(ctx->iformat->name, "lrc") == 0 ||                   // .lrc files
+        strcmp(ctx->iformat->name, "image2") == 0 ||                // Pictures
+        strcmp(ctx->iformat->name, "mov,mp4,m4a,3gp,3g2,mj2") == 0  // .mp4 files
     ) {
         avformat_close_input(&ctx);
         return;
@@ -151,7 +156,8 @@ void localMusicHandler_scanFile(int idx) {
         } else if (strcmp(tag->key, "album") == 0) {
             audioObject.albumTitle = tag->value;
         } else if (strcmp(tag->key, "artist") == 0) {
-            audioObject.artistTitle = tag->value;
+            // In ID3, multiple artists are stored as 'Artist A;Artist B'. Replace ';' with ', '
+            audioObject.artistTitle = std::regex_replace(tag->value, std::regex(";"), ", ");
         } else if (strcmp(tag->key, "track") == 0) {
             audioObject.track = tag->value;
         } else if (strcmp(tag->key, "totaltracks") == 0) {
@@ -179,61 +185,73 @@ void localMusicHandler_generateUid(int idx) {
     localMusicHandler_audioItems[idx].uid = uuidString;
 }
 
-void localMusicHandler_initDatabase() {
-    // TOOD cleanup
+int localMusicHandler_initDatabase() {
+    // Code returns: -1 -> Error, 0 -> No songs in table, 1 -> Songs already in table (Table already existed)
+    static int createTable = 0;
     static int rc = 0;
     char* dbPath = NULL;
     rc = asprintf(&dbPath, "%s/.config/ossp/local.db", getenv("HOME"));
-    if (rc == -1) { printf("[LocalMusicHandler] asprintf() failed.\n"); return; }
+    if (rc == -1) {
+        printf("[LocalMusicHandler] asprintf() failed.\n");
+        return -1;
+    }
 
     struct stat st;
     if (stat(dbPath, &st) == 0) {
         printf("[LocalMusicHandler] Database found, is %ld bytes.\n", st.st_size);
     } else { 
-        printf("[LocalMusicHandler] Database does not exist, creating.\n"); 
+        printf("[LocalMusicHandler] Database does not exist, creating.\n");
+        createTable = 1;
     }
 
     rc = sqlite3_open(dbPath, &sqlite_db);
     if (rc) {
         printf("[LocalMusicHandler] Could not create database: %s\n", sqlite3_errmsg(sqlite_db));
+        free(dbPath);
+        return -1;
     } else {
-        printf("[LocalMusicHandler] Created database.\n");
+        printf("[LocalMusicHandler] Created/Opened database.\n");
     }
 
-    const char* sqlQuery = "CREATE TABLE local_songs(uid TEXT, songTitle TEXT, albumTitle TEXT, artistTitle TEXT, track TEXT, totalTracks TEXT, path TEXT, filesize INT)";
-    rc = sqlite3_exec(sqlite_db, sqlQuery, NULL, 0, &sqlite_errorMsg);
-    if (rc != SQLITE_OK) {
-        printf("[LocalMusicHandler] Could not make table: %s\n", sqlite_errorMsg);
-        sqlite3_free(sqlite_errorMsg);
-        return; // TODO actually handle error
+    if (createTable == 1) {
+        const char* sqlQuery = "CREATE TABLE local_songs(uid TEXT, songTitle TEXT, albumTitle TEXT, artistTitle TEXT, track TEXT, totalTracks TEXT, path TEXT, filesize INT)";
+        rc = sqlite3_exec(sqlite_db, sqlQuery, NULL, 0, &sqlite_errorMsg);
+        if (rc != SQLITE_OK) {
+            printf("[LocalMusicHandler] Could not make table: %s\n", sqlite_errorMsg);
+            sqlite3_free(sqlite_errorMsg);
+            free(dbPath);
+            return -1;
+        }
+        printf("[LocalMusicHandler] Made table.\n");
+        free(dbPath);
+        return 0;
     }
-    printf("[LocalMusicHandler] Made table.\n");
 
-    sqlite3_close(sqlite_db);
+    free(dbPath);
+    return 1;
 }
 
 void localMusicHandler_moveSongsToDatabase(int idx) {
+    sqlite3_stmt* sqlite_stmt;
     const char* sqlQuery = "INSERT INTO local_songs VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
 
-    sqlite3_stmt *stmt;
-    if (sqlite3_prepare_v2(sqlite_db, sqlQuery, -1, &stmt, NULL) != SQLITE_OK) {
-        fprintf(stderr, "Prepare error: %s\n", sqlite3_errmsg(sqlite_db));
-        return;
+    if (sqlite3_prepare_v2(sqlite_db, sqlQuery, -1, &sqlite_stmt, NULL) != SQLITE_OK) {
+        printf("[LocalMusicHandler] Prepare error: %s\n", sqlite3_errmsg(sqlite_db));
+        return; // TODO
     }
 
-    sqlite3_bind_text(stmt, 1, localMusicHandler_audioItems[idx].uid.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, localMusicHandler_audioItems[idx].songTitle.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, localMusicHandler_audioItems[idx].albumTitle.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 4, localMusicHandler_audioItems[idx].artistTitle.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 5, localMusicHandler_audioItems[idx].track.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 6, localMusicHandler_audioItems[idx].totalTracks.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 7, localMusicHandler_audioItems[idx].path.c_str(), -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int64(stmt, 8, localMusicHandler_audioItems[idx].filesize);
+    sqlite3_bind_text(sqlite_stmt, 1, localMusicHandler_audioItems[idx].uid.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(sqlite_stmt, 2, localMusicHandler_audioItems[idx].songTitle.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(sqlite_stmt, 3, localMusicHandler_audioItems[idx].albumTitle.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(sqlite_stmt, 4, localMusicHandler_audioItems[idx].artistTitle.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(sqlite_stmt, 5, localMusicHandler_audioItems[idx].track.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(sqlite_stmt, 6, localMusicHandler_audioItems[idx].totalTracks.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(sqlite_stmt, 7, localMusicHandler_audioItems[idx].path.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int64(sqlite_stmt, 8, localMusicHandler_audioItems[idx].filesize);
 
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
-        fprintf(stderr, "Execution error: %s\n", sqlite3_errmsg(sqlite_db));
+    if (sqlite3_step(sqlite_stmt) != SQLITE_DONE) {
+        printf("[LocalMusicHandler] Execution error: %s\n", sqlite3_errmsg(sqlite_db));
     }
 
-    sqlite3_finalize(stmt);
-
+    sqlite3_finalize(sqlite_stmt);
 }
