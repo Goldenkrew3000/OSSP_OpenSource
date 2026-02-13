@@ -40,31 +40,11 @@ void discordrpc_struct_deinit(discordrpc_data** discordrpc_struct) {
     if (*discordrpc_struct != NULL) { free(*discordrpc_struct); }
 }
 
-static void handleDiscordReady(const DiscordUser* connectedUser)
-{
-    printf("\nDiscord: connected to user %s#%s - %s\n",
-           connectedUser->username,
-           connectedUser->discriminator,
-           connectedUser->userId);
-}
-
-static void handleDiscordDisconnected(int errcode, const char* message)
-{
-    printf("\nDiscord: disconnected (%d: %s)\n", errcode, message);
-}
-
-static void handleDiscordError(int errcode, const char* message)
-{
-    printf("\nDiscord: error (%d: %s)\n", errcode, message);
-}
-
 int discordrpc_init() {
     printf("[DiscordRPC] Initializing.\n");
+    // TODO Can I just not deal with the handler callbacks at all?
     DiscordEventHandlers handlers;
     memset(&handlers, 0, sizeof(handlers));
-    handlers.ready = handleDiscordReady;
-    handlers.disconnected = handleDiscordDisconnected;
-    handlers.errored = handleDiscordError;
     Discord_Initialize(discordrpc_appid, &handlers, 1, NULL);
 
     // Fetch OS String for RPC (Heap-allocated)
@@ -86,7 +66,7 @@ void discordrpc_update(discordrpc_data** discordrpc_struct) {
     if ((*discordrpc_struct)->state == DISCORDRPC_STATE_IDLE) {
         asprintf(&detailsString, "Idle");
         presence.details = detailsString;
-    } else if ((*discordrpc_struct)->state == DISCORDRPC_STATE_PLAYING_SONG) {
+    } else if ((*discordrpc_struct)->state == DISCORDRPC_STATE_PLAYING_OPENSUBSONIC) {
         // Playing a song
         time_t currentTime = time(NULL);
         asprintf(&detailsString, "%s", (*discordrpc_struct)->songTitle);
@@ -99,7 +79,9 @@ void discordrpc_update(discordrpc_data** discordrpc_struct) {
         if (configObj->discordrpc_showSysDetails) {
             presence.largeImageText = discordrpc_osString;
         }
-    } else if ((*discordrpc_struct)->state == DISCORDRPC_STATE_PLAYING_RADIO) {
+    } else if ((*discordrpc_struct)->state == DISCORDRPC_STATE_PLAYING_LOCALFILE) {
+        //
+    } else if ((*discordrpc_struct)->state == DISCORDRPC_STATE_PLAYING_INTERNETRADIO) {
         // Playing an internet radio station
         time_t currentTime = time(NULL);
         asprintf(&detailsString, "%s", (*discordrpc_struct)->songTitle);
