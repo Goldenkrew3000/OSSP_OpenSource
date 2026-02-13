@@ -67,7 +67,7 @@ typedef struct {
     char* lv2_reverb_filter_name;       // LV2 Calf Reverb LV2 Name
 
     // Local Settings
-    char* local_rootdir;                // Local Music Directory Root
+    char* local_rootdir;                // Local Music Root Directory
 } configHandler_config_t;
 
 int configHandler_Read(configHandler_config_t** config);

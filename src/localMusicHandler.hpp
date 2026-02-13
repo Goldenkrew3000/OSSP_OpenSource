@@ -11,7 +11,13 @@
 extern "C" {
 #endif // __cplusplus
 
-//
+void localMusicHandler_scan();
+void localMusicHandler_scanDirectory(char* directory);
+void localMusicHandler_scanFile(int idx);
+void localMusicHandler_generateUid(int idx);
+
+void localMusicHandler_initDatabase();
+void localMusicHandler_moveSongsToDatabase(int idx);
 
 #ifdef __cplusplus
 }
