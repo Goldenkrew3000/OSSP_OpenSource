@@ -65,6 +65,9 @@ typedef struct {
     char* lv2_parax32_frequency_left;
     char* lv2_parax32_frequency_right;
     char* lv2_reverb_filter_name;       // LV2 Calf Reverb LV2 Name
+
+    // Local Settings
+    char* local_rootdir;                // Local Music Directory Root
 } configHandler_config_t;
 
 int configHandler_Read(configHandler_config_t** config);

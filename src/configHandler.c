@@ -68,6 +68,7 @@ int configHandler_Read(configHandler_config_t** configObj) {
     (*configObj)->lv2_parax32_frequency_left = NULL;
     (*configObj)->lv2_parax32_frequency_right = NULL;
     (*configObj)->lv2_reverb_filter_name = NULL;
+    (*configObj)->local_rootdir = NULL;
 
     // Set internal configuration values
     (*configObj)->internal_opensubsonic_version = strdup("1.8.0");
@@ -465,6 +466,19 @@ int configHandler_Read(configHandler_config_t** configObj) {
         (*configObj)->lv2_reverb_filter_name = strdup(calf_reverb_filter_name->valuestring);
     }
 
+    // Make an object from local
+    cJSON* local_root = cJSON_GetObjectItemCaseSensitive(root, "local");
+    if (local_root == NULL) {
+        logger_log_error(__func__, "Error parsing JSON - local does not exist.");
+        cJSON_Delete(root);
+        return 1;
+    }
+
+    cJSON* local_root_directory = cJSON_GetObjectItemCaseSensitive(local_root, "rootDirectory");
+    if (cJSON_IsString(local_root_directory) && local_root_directory->valuestring != NULL) {
+        (*configObj)->local_rootdir = strdup(local_root_directory->valuestring);
+    }
+    
     cJSON_Delete(root);
     logger_log_general(__func__, "Successfully read configuration file.");
     return 0;
@@ -497,5 +511,6 @@ void configHandler_Free(configHandler_config_t** configObj) {
     if ((*configObj)->lv2_parax32_frequency_left != NULL) { free((*configObj)->lv2_parax32_frequency_left); }
     if ((*configObj)->lv2_parax32_frequency_right != NULL) { free((*configObj)->lv2_parax32_frequency_right); }
     if ((*configObj)->lv2_reverb_filter_name != NULL) { free((*configObj)->lv2_reverb_filter_name); }
+    if ((*configObj)->local_rootdir != NULL) { free((*configObj)->local_rootdir); }
     if (*configObj != NULL) { free(*configObj); }
 }
