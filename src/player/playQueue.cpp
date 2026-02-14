@@ -20,69 +20,105 @@
 #include "playQueue.hpp"
 
 // C++ interface for storing song queue data (C interface is in the header)
-class SongObject {
+class OSSPQ_SongObject {
     public:
         std::string title;
+        std::string album;
         std::string artist;
         std::string id;
+        std::string streamUrl;
+        std::string coverArtUrl;
         long duration;
+        int mode;
 };
 
 // NOTE: Acronym is OpenSubsonicPlayerQueue
-std::deque<SongObject> OSSPQ_Items;
+std::deque<OSSPQ_SongObject> OSSPQ_SongQueue;
 
-int internal_OSSPQ_AppendToEnd(char* title, char* artist, char* id, long duration) {
-    // Append a new song to the end of the queue
-    printf("Title: %s\nArtist: %s\nID: %s\nDuration: %ld\n", title, artist, id, duration);
-    // TODO: Find a neater way of converting a C string to a C++ string??
-    std::string cpp_title(title);
-    std::string cpp_artist(artist);
-    std::string cpp_id(id);
-    SongObject songObject;
-    songObject.title = cpp_title;
-    songObject.artist = cpp_artist;
-    songObject.id = cpp_id;
-    songObject.duration = duration;
-    OSSPQ_Items.push_back(songObject);
+int OSSPQ_AppendToEnd(char* title, char* album, char* artist, char* id, char* streamUrl, char* coverArtUrl, long duration, int mode) {
+    OSSPQ_SongObject songObject;
+
+    if (mode == OSSPQ_MODE_OPENSUBSONIC || mode == OSSPQ_MODE_LOCALFILE) {
+        // Both Local File and OpenSubsonic playback both take the same arguments
+        if (mode == OSSPQ_MODE_OPENSUBSONIC) {
+            printf("[OSSPQ] Appending OpenSubsonic Song: %s by %s.\n", title, artist);
+        } else if (mode == OSSPQ_MODE_LOCALFILE) {
+            printf("[OSSPQ] Appending Local Song: %s by %s.\n", title, artist);
+        }
+
+        songObject.title = title;
+        songObject.album = album;
+        songObject.artist = artist;
+        songObject.id = id;
+        songObject.streamUrl = streamUrl;
+        songObject.coverArtUrl = coverArtUrl;
+        songObject.duration = duration;
+        songObject.mode = mode;
+    } else if (mode == OSSPQ_MODE_INTERNETRADIO) {
+        printf("[OSSPQ] Appending Internet Radio Station: %s.\n", title);
+        
+        songObject.title = title;
+        songObject.id = id;
+        songObject.streamUrl = streamUrl;
+    }
+
+    OSSPQ_SongQueue.push_back(songObject);
     return 0;
 }
 
-OSSPQ_SongStruct* internal_OSSPQ_PopFromFront() {
-    if (OSSPQ_Items.empty()) {
-        // No items in play queue
+OSSPQ_SongStruct* OSSPQ_PopFromFront() {
+    // Check if song queue is empty, if not, then pop oldest
+    if (OSSPQ_SongQueue.empty()) {
         return NULL;
     }
+    OSSPQ_SongObject songObject = OSSPQ_SongQueue.front();
+    OSSPQ_SongQueue.pop_front();
 
-    // Pull the first song off the song queue
-    SongObject songObject = OSSPQ_Items.front();
-    OSSPQ_Items.pop_front();
+    // Allocate, initialize, and fill C compatible song object
+    OSSPQ_SongStruct* songObjectC = (OSSPQ_SongStruct*)malloc(sizeof(OSSPQ_SongStruct));
+    songObjectC->title = NULL;
+    songObjectC->album = NULL;
+    songObjectC->artist = NULL;
+    songObjectC->id = NULL;
+    songObjectC->streamUrl = NULL;
+    songObjectC->coverArtUrl = NULL;
+    songObjectC->duration = 0;
+    songObjectC->mode = 0;
 
-    // Move song data into a C readable format
-    // NOTE: I am initializing the variables to a known value just in case there is missing information in songObject
-    OSSPQ_SongStruct* playQueueObject = (OSSPQ_SongStruct*)malloc(sizeof(OSSPQ_SongStruct));
-    playQueueObject->title = NULL;
-    playQueueObject->artist = NULL;
-    playQueueObject->id = NULL;
-    playQueueObject->duration = 0;
-
-    playQueueObject->title = strdup(songObject.title.c_str());
-    playQueueObject->artist = strdup(songObject.artist.c_str());
-    playQueueObject->id = strdup(songObject.id.c_str());
-    playQueueObject->duration = songObject.duration;
-    return playQueueObject;
+    if (songObject.mode == OSSPQ_MODE_OPENSUBSONIC || songObject.mode == OSSPQ_MODE_LOCALFILE) {
+        songObjectC->title = strdup(songObject.title.c_str());
+        songObjectC->album = strdup(songObject.album.c_str());
+        songObjectC->artist = strdup(songObject.artist.c_str());
+        songObjectC->id = strdup(songObject.id.c_str());
+        songObjectC->streamUrl = strdup(songObject.streamUrl.c_str());
+        songObjectC->coverArtUrl = strdup(songObject.coverArtUrl.c_str());
+        songObjectC->duration = songObject.duration;
+        songObjectC->mode = songObject.mode;
+    } else if (songObject.mode == OSSPQ_MODE_INTERNETRADIO) {
+        songObjectC->title = strdup(songObject.title.c_str());
+        songObjectC->id = strdup(songObject.id.c_str());
+        songObjectC->streamUrl = strdup(songObject.streamUrl.c_str());
+    }
+    
+    return songObjectC;
 }
 
-void internal_OSSPQ_FreeSongObject(OSSPQ_SongStruct* songObject) {
-    if (songObject->title != NULL) { free(songObject->title); }
-    if (songObject->artist != NULL) { free(songObject->artist); }
-    if (songObject->id != NULL) { free(songObject->id); }
-    if (songObject != NULL) { free(songObject); }
+void OSSPQ_FreeSongObjectC(OSSPQ_SongStruct* songObjectC) {
+    printf("[OSSPQ] Freeing SongObjectC.\n");
+    if (songObjectC->title != NULL) { free(songObjectC->title); }
+    if (songObjectC->album != NULL) { free(songObjectC->album); }
+    if (songObjectC->artist != NULL) { free(songObjectC->artist); }
+    if (songObjectC->id != NULL) { free(songObjectC->id); }
+    if (songObjectC->streamUrl != NULL) { free(songObjectC->streamUrl); }
+    if (songObjectC->coverArtUrl != NULL) { free(songObjectC->coverArtUrl); }
+    if (songObjectC != NULL) { free(songObjectC); }
 }
 
+// TODO Bullshit functions for dealing with Imgui
 char* internal_OSSPQ_GetTitleAtIndex(int idx) {
-    return (char*)OSSPQ_Items[idx].title.c_str();
+    return (char*)OSSPQ_SongQueue[idx].title.c_str();
 }
 
 int internal_OSSPQ_GetItemCount() {
-    return OSSPQ_Items.size();
+    return OSSPQ_SongQueue.size();
 }
