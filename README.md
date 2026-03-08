@@ -23,12 +23,13 @@ It's features include:
 - Fast and responsive
 - Advanced Security Handling of Stored Credentials and Web Requests
 
-OSSP has been privately tested under:
-- Linux glibc / musl / x86_64 / aarch64
-- NetBSD x86_64
-- OpenBSD x86_64
-- iOS / macOS Catalyst aarch64
-- 32-bit platforms have major issues at this time
+OSSP has support for the following operating systems:
+- Linux (GLibC / musl, x86_64 / aarch64)
+  - musl needs a cryptography patch, not upstreamed
+- NetBSD (10.1, x86_64)
+  - LSP Plugins needs to be modified to build on NetBSD
+- iOS / macOS
+- 32-bit platforms currently have major issues
 
 OSSP itself is extremely portable, and should be usable on any UNIX®/Unix-like platform with little to no patching, but the Gstreamer player logic is less portable (Specifically LSP Plugins).
 
