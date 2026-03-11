@@ -23,13 +23,18 @@ It's features include:
 - Fast and responsive
 - Advanced Security Handling of Stored Credentials and Web Requests
 
+## Building
+Please look at the ```building``` folder for more information. Due to certain configuration choices made by package maintainers, building OSSP is not exactly easy, although most of the process for supported platforms is automated, and the dependency tree is kept completely separate from system packages to avoid conflicts.<br>
+
 OSSP has support for the following operating systems:
-- Linux (GLibC / musl, x86_64 / aarch64)
+- Linux (GLibc / musl, x86_64 / aarch64)
   - musl needs a cryptography patch, not upstreamed
 - NetBSD (10.1, x86_64)
   - LSP Plugins needs to be modified to build on NetBSD
+- OpenBSD (7.8, x86_64)
+  - Many, many patches needed to dependencies
 - iOS / macOS
-- 32-bit platforms currently have major issues
+- 32-bit platforms currently have major issues, and big-endian platforms are not expected to work (Untested)
 
 OSSP itself is extremely portable, and should be usable on any UNIX®/Unix-like platform with little to no patching, but the Gstreamer player logic is less portable (Specifically LSP Plugins).
 
