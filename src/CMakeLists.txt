@@ -15,11 +15,6 @@ pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
 
 add_subdirectory(external/discord-rpc)
 
-if(APPLE)
-    link_directories(/opt/homebrew/Cellar/glib/2.86.0/lib)
-    link_directories(/opt/homebrew/lib)
-endif()
-
 add_executable(ossp MACOSX_BUNDLE
     main.c
     configHandler.c
@@ -62,20 +57,29 @@ add_executable(ossp MACOSX_BUNDLE
     external/sqlite3/sqlite3.c
 )
 
+# Use macOS .app format (Required for Discord RPC)
 set_target_properties(ossp PROPERTIES
     MACOSX_BUNDLE_BUNDLE_NAME "OSSP"
     MACOSX_BUNDLE_GUI_IDENTIFIER "org.hojuix.ossp"
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
-    message("Detected NetBSD")
+    message("--- Detected NetBSD ---")
     target_link_directories(ossp PRIVATE /usr/pkg/lib/ffmpeg8)
     include_directories(${GSTREAMER_INCLUDE_DIRS} ${AVFORMAT_INCLUDE_DIR} ${AVUTIL_INCLUDE_DIRS} /usr/X11R7/include /usr/pkg/include/ffmpeg8)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    message("--- Detected macOS ---")
+    target_link_directories(ossp PRIVATE /opt/ossp/lib /opt/homebrew/lib)
+    pkg_check_modules(AVFORMAT REQUIRED libavformat)
+    pkg_check_modules(AVUTIL REQUIRED libavutil)
+    pkg_check_modules(BZ2 REQUIRED bzip2)
+    pkg_check_modules(SDL2 REQUIRED sdl2)
+    include_directories(${GSTREAMER_INCLUDE_DIRS} ${AVFORMAT_INCLUDE_DIR} ${AVUTIL_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS})
 else()
-    message("Detected generic operating system")
+    message("--- Detected generic operating system ---")
     pkg_check_modules(AVFORMAT REQUIRED libavformat)
     pkg_check_modules(AVUTIL REQUIRED libavutil)
     include_directories(${GSTREAMER_INCLUDE_DIRS} ${AVFORMAT_INCLUDE_DIR} ${AVUTIL_INCLUDE_DIRS})
 endif()
 
-target_link_libraries(ossp PRIVATE OpenSSL::SSL OpenSSL::Crypto CURL::libcurl SDL2::SDL2 ${OPENGL_LIBRARIES} discord-rpc ${GSTREAMER_LIBRARIES} ${AVFORMAT_LIBRARIES} ${AVUTIL_LIBRARIES} avformat avutil)
+target_link_libraries(ossp PRIVATE OpenSSL::SSL OpenSSL::Crypto CURL::libcurl SDL2::SDL2 ${OPENGL_LIBRARIES} discord-rpc ${BZ2_LIBRARIES} ${GSTREAMER_LIBRARIES} ${AVFORMAT_LIBRARIES} ${AVUTIL_LIBRARIES} avformat avutil)
