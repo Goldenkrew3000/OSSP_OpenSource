@@ -1,4 +1,4 @@
-gcc runTests.c \
+/opt/homebrew/opt/llvm/bin/clang -g -fsanitize=address runTests.c \
     configHandler.c \
     libopensubsonic/httpclient.c \
     external/cJSON.c \
@@ -19,3 +19,4 @@ gcc runTests.c \
     libopensubsonic/endpoint_scrobble.c \
     libopensubsonic/endpoint_getInternetRadioStations.c \
     -o tests -lcurl
+ASAN_OPTIONS=detect_leaks=1 ./tests
