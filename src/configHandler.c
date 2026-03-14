@@ -5,6 +5,8 @@
  * Info: Configuration Handler
  */
 
+// TODO REFACTOR with OSS_P*oj
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,7 +70,9 @@ int configHandler_Read(configHandler_config_t** configObj) {
     (*configObj)->lv2_parax32_frequency_left = NULL;
     (*configObj)->lv2_parax32_frequency_right = NULL;
     (*configObj)->lv2_reverb_filter_name = NULL;
+    (*configObj)->local_enable = false;
     (*configObj)->local_rootdir = NULL;
+    (*configObj)->client_socket_path = NULL;
 
     // Set internal configuration values
     (*configObj)->internal_opensubsonic_version = strdup("1.8.0");
@@ -474,9 +478,29 @@ int configHandler_Read(configHandler_config_t** configObj) {
         return 1;
     }
 
+    cJSON* local_enable = cJSON_GetObjectItemCaseSensitive(scrobbler_root, "enable");
+    if (cJSON_IsBool(local_enable)) {
+        if (cJSON_IsTrue(local_enable)) {
+            (*configObj)->local_enable = true;
+        }
+    }
+
     cJSON* local_root_directory = cJSON_GetObjectItemCaseSensitive(local_root, "rootDirectory");
     if (cJSON_IsString(local_root_directory) && local_root_directory->valuestring != NULL) {
         (*configObj)->local_rootdir = strdup(local_root_directory->valuestring);
+    }
+
+    // Make an object from client
+    cJSON* client_root = cJSON_GetObjectItemCaseSensitive(root, "client");
+    if (client_root == NULL) {
+        logger_log_error(__func__, "Error parsing JSON - client does not exist.");
+        cJSON_Delete(root);
+        return 1;
+    }
+
+    cJSON* client_socket_path = cJSON_GetObjectItemCaseSensitive(client_root, "socketPath");
+    if (cJSON_IsString(client_socket_path) && client_socket_path->valuestring != NULL) {
+        (*configObj)->client_socket_path = strdup(client_socket_path->valuestring);
     }
     
     cJSON_Delete(root);
@@ -512,5 +536,6 @@ void configHandler_Free(configHandler_config_t** configObj) {
     if ((*configObj)->lv2_parax32_frequency_right != NULL) { free((*configObj)->lv2_parax32_frequency_right); }
     if ((*configObj)->lv2_reverb_filter_name != NULL) { free((*configObj)->lv2_reverb_filter_name); }
     if ((*configObj)->local_rootdir != NULL) { free((*configObj)->local_rootdir); }
+    if ((*configObj)->client_socket_path != NULL) { free((*configObj)->client_socket_path); }
     if (*configObj != NULL) { free(*configObj); }
 }
