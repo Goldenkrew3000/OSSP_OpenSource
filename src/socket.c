@@ -17,6 +17,7 @@
 #include <sys/un.h>
 #include "external/cJSON.h"
 #include "configHandler.h"
+#include "player/player.h"
 #include "libopensubsonic/utils.h"
 #include "libopensubsonic/httpclient.h"
 #include "libopensubsonic/endpoint_getStarred.h"
@@ -35,7 +36,7 @@ bool isSocketHandlerLoopRunning = false;
 
 
 void socketHandler_read();
-void socketHandler_performAction(int id, char** retDataStr);
+void socketHandler_performAction(int id, char** retDataStr, cJSON** cliReqJson);
 
 int SockSig_Length = 4;
 
@@ -124,7 +125,7 @@ int socketHandler_init() {
 
         // Perform action
         char* retData = NULL;
-        socketHandler_performAction(id, &retData);
+        socketHandler_performAction(id, &retData, &cliReqJson);
         int retDataSize = strlen(retData);
 
         // Send size back to client
@@ -149,7 +150,7 @@ void socketHandler_cleanup() {
     unlink(configObj->client_socket_path);
 }
 
-void socketHandler_performAction(int id, char** retDataStr) {
+void socketHandler_performAction(int id, char** retDataStr, cJSON** cliReqJson) {
     switch (id) {
         case OSSP_SOCKET_ACTION_GETSTARREDSONGS:
             printf("[SocketHandler] Client requested Starred Songs.\n");
@@ -202,6 +203,36 @@ void socketHandler_performAction(int id, char** retDataStr) {
 
             opensubsonic_getStarred_struct_free(&getStarredStruct); // Free Struct
             break;
+
+
+
+        case OSSP_SOCKET_ACTION_OSSPP_PREV:
+            //
+            break;
+        case OSSP_SOCKET_ACTION_OSSPP_PLAYPAUSE:
+            OSSPlayer_GstECont_Playbin3_PlayPause();
+            *retDataStr = strdup("OK");
+            break;
+        case OSSP_SOCKET_ACTION_OSSPP_NEXT:
+            OSSPlayer_GstECont_Playbin3_Stop();
+            *retDataStr = strdup("OK");
+            break;
+        case OSSP_SOCKET_ACTION_OSSPP_OUTVOLUME:
+            printf("OUT VOL CHANGED!\n");
+
+            int vol = 0;
+            OSS_Pioj(&vol, *cliReqJson, "vol");
+            printf("New vol: %d\n", vol);
+
+            float f_vol = (float)vol / 100.0f;
+            printf("New f_vol: %f\n", f_vol);
+            OSSPlayer_GstECont_OutVolume_set(f_vol);
+
+            *retDataStr = strdup("OK");
+            break;
+
+
+
         default:
             printf("[SocketHandler] Unknown action.\n");
             break;
