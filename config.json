@@ -1,63 +1,77 @@
 {
     "opensubsonic_server": {
+        "info": "OpenSubsonic server settings. You will be able to disable this in the future if you only want to use local playback",
         "protocol": "https",
-        "server": "aaa.bbb.com",
+        "server": "www.example.com",
         "username": "user",
-        "password": ""
+        "password": "password"
+    },
+    "client": {
+        "info": "Path for the client unix socket. Leave this unedited unless you know what you're doing",
+        "socketPath": "/tmp/ossp_socket"
+    },
+    "local": {
+        "info": "Local music playback configuration",
+        "enable": false,
+        "rootDirectory": "/Path/to/local/music/folder"
     },
     "scrobbler": {
-        "listenbrainz_enable": true,
+        "info": "LastFM requires some work to get valid tokens beforehand",
+        "listenbrainz_enable": false,
         "listenbrainz_token": "",
-        "lastfm_enable": true,
-        "lastfm_username": "aarch64",
-        "lastfm_password": "",
+        "lastfm_enable": false,
+        "lastfm_username": "Your LastFM username",
+        "lastfm_password": "Your LastFM password",
         "lastfm_api_key": "",
         "lastfm_api_secret": "",
         "lastfm_session_key": ""
     },
     "discord_rpc": {
+        "info": "Discord RPC Settings. Leave method on '0', method '1' is highly experimental and requires a server",
         "enable": true,
-        "method": 0
+        "method": 0,
+        "showSystemDetails": true,
+        "showCoverArt": true
     },
     "audio": {
         "equalizer": {
             "enable": true,
-            "followPitch": true,
+            "followPitch": false,
             "graph": [
                 {
                     "bandwidth": 0.5,
                     "frequency": 22,
-                    "gain": 17,
+                    "gain": 15.83,
                     "bypass": false
                 },
                 {
                     "bandwidth": 0.5,
                     "frequency": 28,
-                    "gain": 17,
+                    "gain": 12.65,
                     "bypass": false
                 },
                 {
                     "bandwidth": 0.5,
                     "frequency": 35,
-                    "gain": 8.6,
+                    "gain": 10.69,
                     "bypass": false
                 },
                 {
                     "bandwidth": 0.5,
                     "frequency": 43,
-                    "gain": 5.4,
+                    "gain": 6.65,
                     "bypass": false
                 },
                 {
                     "bandwidth": 0.5,
                     "frequency": 53,
-                    "gain": 12.3,
+                    "gain": 6.16,
                     "bypass": false
                 },
                 {
                     "bandwidth": 0.5,
                     "frequency": 66,
-                    "gain": 5.1,
+                    "gain": 0,
                     "bypass": false
                 },
                 {
@@ -74,7 +88,7 @@
             "rate": 1.0
         },
         "reverb": {
-            "enable": true,
+            "enable": false,
             "wetDryMix": 15.0
         },
         "lv2": {
