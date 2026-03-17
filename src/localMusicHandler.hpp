@@ -19,6 +19,25 @@ void localMusicHandler_generateUid(int idx);
 int localMusicHandler_initDatabase();
 void localMusicHandler_moveSongsToDatabase(int idx);
 
+
+
+
+
+typedef struct {
+    char* uid;
+    char* title;
+    char* album;
+    char* artist;
+    char* path;
+} localMusicHandler_songReq_songs_t;
+
+typedef struct {
+    int songCount;
+    localMusicHandler_songReq_songs_t* songs;
+} localMusicHandler_songReq_t;
+
+localMusicHandler_songReq_t* localMusicHandler_test();
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

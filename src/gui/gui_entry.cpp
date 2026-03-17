@@ -5,6 +5,11 @@
  * Info: Debug / Prototype graphical interface
  */
 
+/*
+ * THIS IS SPECIFICALLY THE DEVELOPMENT INTERFACE
+ * IT IS HORRIFICIALLY UNOPTIMIZED BUT IT WORKS
+ */
+
 #include "../external/imgui/imgui.h"
 #include "../external/imgui/backends/imgui_impl_sdl2.h"
 #include "../external/imgui/backends/imgui_impl_opengl2.h"
@@ -15,15 +20,25 @@
 #include "../configHandler.h"
 #include "../libopensubsonic/httpclient.h"
 #include "../libopensubsonic/endpoint_getStarred.h"
+#include "../libopensubsonic/endpoint_getAlbum.h"
 #include "../player/player.h"
+#include "../libopensubsonic/endpoint_getInternetRadioStations.h"
 
 extern configHandler_config_t* configObj;
 bool bLikedSongsShow = false;
 bool bAudioSettingsShow = false;
 bool bPlayQueueShow = false;
+bool bShowRadioStations = false;
+bool bShowNowPlaying = false;
+bool bShowLikedAlbums = false;
+bool bShowLocalSongs = false;
 void showLikedSongs();
 void showAudioSettings();
 void showPlayQueue();
+void showRadioStations();
+void showNowPlaying();
+void showLikedAlbums();
+void showLocalSongs();
 
 int gui_entry() {
     // Initialize SDL
@@ -112,6 +127,26 @@ int gui_entry() {
                 bPlayQueueShow = true;
             }
 
+            if (ImGui::Button("Radio")) {
+                bShowRadioStations = true;
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Now Playing")) {
+                bShowNowPlaying = true;
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Liked Albums")) {
+                bShowLikedAlbums = true;
+            }
+
+            if (ImGui::Button("Local Songs")) {
+                bShowLocalSongs = true;
+            }
+
             ImGui::End();
         }
 
@@ -125,6 +160,22 @@ int gui_entry() {
 
         if (bPlayQueueShow) {
             showPlayQueue();
+        }
+
+        if (bShowRadioStations) {
+            showRadioStations();
+        }
+
+        if (bShowNowPlaying) {
+            showNowPlaying();
+        }
+
+        if (bShowLikedAlbums) {
+            showLikedAlbums();
+        }
+
+        if (bShowLocalSongs) {
+            showLocalSongs();
         }
 
         // Render
@@ -198,10 +249,30 @@ void showLikedSongs() {
     }
 
     if (selectedSong != -1) {
-        OSSPlayer_QueueAppend(starredStruct->songs[selectedSong].title,
-                              starredStruct->songs[selectedSong].artist,
-                              starredStruct->songs[selectedSong].id,
-                              starredStruct->songs[selectedSong].duration);
+        // Form URL
+        opensubsonic_httpClient_URL_t* song_url = (opensubsonic_httpClient_URL_t*)malloc(sizeof(opensubsonic_httpClient_URL_t));
+        opensubsonic_httpClient_URL_prepare(&song_url);
+        song_url->endpoint = OPENSUBSONIC_ENDPOINT_STREAM;
+        song_url->id = strdup(starredStruct->songs[selectedSong].id);
+        opensubsonic_httpClient_formUrl(&song_url);
+
+        opensubsonic_httpClient_URL_t* coverart_url = (opensubsonic_httpClient_URL_t*)malloc(sizeof(opensubsonic_httpClient_URL_t));
+        opensubsonic_httpClient_URL_prepare(&coverart_url);
+        coverart_url->endpoint = OPENSUBSONIC_ENDPOINT_GETCOVERART;
+        coverart_url->id = strdup(starredStruct->songs[selectedSong].coverArt);
+        opensubsonic_httpClient_formUrl(&coverart_url);
+        
+        OSSPQ_AppendToEnd(starredStruct->songs[selectedSong].title,
+                          starredStruct->songs[selectedSong].album,
+                          starredStruct->songs[selectedSong].artist,
+                          starredStruct->songs[selectedSong].id,
+                          song_url->formedUrl,
+                          coverart_url->formedUrl,
+                          starredStruct->songs[selectedSong].duration,
+                          OSSPQ_MODE_OPENSUBSONIC);
+        
+        opensubsonic_httpClient_URL_cleanup(&song_url);
+        opensubsonic_httpClient_URL_cleanup(&coverart_url);
         selectedSong = -1;
     }
 
@@ -242,6 +313,10 @@ void showAudioSettings() {
         OSSPlayer_GstECont_Pitch_Set(pitch_val * 100.0f); // Convert semitones to cents
     }
 
+    if(ImGui::Button("Skip")) {
+        OSSPlayer_GstECont_Playbin3_Stop();
+    }
+
     ImGui::End();
 }
 
@@ -260,6 +335,292 @@ void showPlayQueue() {
                 }
             ImGui::EndChild();
             }
+
+    ImGui::End();
+}
+
+
+
+bool haveRadioStations = false;
+opensubsonic_getInternetRadioStations_struct* irsStruct;
+opensubsonic_httpClient_URL_t* radioUrl;
+
+void getRadioStations() {
+    radioUrl = (opensubsonic_httpClient_URL_t*)malloc(sizeof(opensubsonic_httpClient_URL_t));
+    opensubsonic_httpClient_URL_prepare(&radioUrl);
+    radioUrl->endpoint = OPENSUBSONIC_ENDPOINT_GETINTERNETRADIOSTATIONS;
+    opensubsonic_httpClient_formUrl(&radioUrl);
+    opensubsonic_httpClient_fetchResponse(&radioUrl, (void**)&irsStruct);
+
+    if (irsStruct->errorCode != 0) {
+        // Error happened
+    }
+
+    haveRadioStations = true;
+}
+
+void showRadioStations() {
+    if (!haveRadioStations) { getRadioStations(); }
+
+    ImGui::Begin("Radio Stations");
+
+    static int selectedSong = -1;
+    if (haveRadioStations) {
+        if (ImGui::BeginChild("Radio Stations", ImVec2(0, 200), ImGuiChildFlags_Border)) {
+            for (int i = 0; i < irsStruct->radioStationCount; i++) {
+                if (ImGui::Selectable(irsStruct->radioStations[i].name, selectedSong == i)) {
+                    selectedSong = i;
+                }
+            }
+        ImGui::EndChild();
+        }
+    }
+
+    
+    if (selectedSong != -1) {
+        //OSSPlayer_QueueAppend_Radio(irsStruct->radioStations[selectedSong].name,
+        //                      irsStruct->radioStations[selectedSong].id,
+        //                      irsStruct->radioStations[selectedSong].streamUrl);
+        selectedSong = -1;
+    }
+
+    ImGui::End();
+}
+
+void showNowPlaying() {
+    ImGui::Begin("Now Playing");
+
+    /*
+     * Okay so I need:
+     *  - Current and final position of song
+     *  - Play, Pause, Next buttons (Needs DiscordRPC expansion)
+     */
+
+    ImGui::End();
+}
+
+
+void showAlbum(char* id);
+
+int likedAlbumsSelectedSong = -1;
+void showLikedAlbums() {
+    // /getStarred is all of the liked info, not just songs
+    if (!haveLikedSongsInfo) { getLikedSongsInfo(); }
+
+    ImGui::Begin("Liked Albums");
+
+    ImGui::Text("Liked Albums");
+
+    if (ImGui::Button("Close")) {
+        bShowLikedAlbums = false;
+    }
+
+    if (ImGui::Button("Refresh")) {
+        opensubsonic_getStarred_struct_free(&starredStruct);
+        opensubsonic_httpClient_URL_cleanup(&starredUrl);
+        haveLikedSongsInfo = false;
+    }
+
+    if (haveLikedSongsInfo) {
+        if (ImGui::BeginChild("Liked Albums", ImVec2(0, 200), ImGuiChildFlags_Border)) {
+            for (int i = 0; i < starredStruct->albumCount; i++) {
+                if (ImGui::Selectable(starredStruct->albums[i].title, likedAlbumsSelectedSong == i)) {
+                    likedAlbumsSelectedSong = i;
+                }
+            }
+        ImGui::EndChild();
+        }
+    }
+
+    if (likedAlbumsSelectedSong != -1) {
+        showAlbum(starredStruct->albums[likedAlbumsSelectedSong].id);
+    }
+
+    ImGui::End();
+}
+
+bool hasAlbum = false;
+opensubsonic_getAlbum_struct* getAlbumStruct;
+void getAlbum(char* id) {
+    opensubsonic_httpClient_URL_t* url = (opensubsonic_httpClient_URL_t*)malloc(sizeof(opensubsonic_httpClient_URL_t));
+    opensubsonic_httpClient_URL_prepare(&url);
+    url->endpoint = OPENSUBSONIC_ENDPOINT_GETALBUM;
+    url->id = strdup(id);
+    opensubsonic_httpClient_formUrl(&url);
+    
+    opensubsonic_httpClient_fetchResponse(&url, (void**)&getAlbumStruct);
+    
+    //opensubsonic_getAlbum_struct_free(&getAlbumStruct);
+    //opensubsonic_httpClient_URL_cleanup(&url);
+
+    hasAlbum = true;
+}
+
+static int rand_int(int n) {
+  int limit = RAND_MAX - RAND_MAX % n;
+  int rnd;
+
+  do {
+    rnd = rand();
+  } while (rnd >= limit);
+  return rnd % n;
+}
+
+void shuffle(int *array, int n) {
+  int i, j, tmp;
+
+  for (i = n - 1; i > 0; i--) {
+    j = rand_int(i + 1);
+    tmp = array[j];
+    array[j] = array[i];
+    array[i] = tmp;
+  }
+}
+
+void shuffleAlbum() {
+    int n = getAlbumStruct->songCount;
+
+    int arr[1] = { 0 };
+    for (int i = 0; i < n; i++) {
+        arr[i] = i;
+    }
+
+    shuffle(arr, n);
+
+    for (int i = 0; i < n; i++) {
+        //OSSPlayer_QueueAppend_Song(getAlbumStruct->songs[arr[i]].title,
+         //                     getAlbumStruct->songs[arr[i]].artist,
+        //                      getAlbumStruct->songs[arr[i]].id,
+        //                      getAlbumStruct->songs[arr[i]].duration);
+    }
+}
+
+#include <ctime>
+void showAlbum(char* id) {
+    ImGui::Begin("Album");
+
+    if (!hasAlbum) { getAlbum(id); }
+
+    ImGui::Text("Album");
+
+    if (ImGui::Button("Close")) {
+        likedAlbumsSelectedSong = -1;
+        hasAlbum = false;
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("Play all")) {
+        for (int i = 0; i < getAlbumStruct->songCount; i++) {
+            /*
+            // Form URL
+            opensubsonic_getAlbum_struct*
+
+            opensubsonic_httpClient_URL_t* song_url = (opensubsonic_httpClient_URL_t*)malloc(sizeof(opensubsonic_httpClient_URL_t));
+            opensubsonic_httpClient_URL_prepare(&song_url);
+            song_url->endpoint = OPENSUBSONIC_ENDPOINT_STREAM;
+            song_url->id = strdup(starredStruct->songs[selectedSong].id);
+            opensubsonic_httpClient_formUrl(&song_url);
+
+            opensubsonic_httpClient_URL_t* coverart_url = (opensubsonic_httpClient_URL_t*)malloc(sizeof(opensubsonic_httpClient_URL_t));
+            opensubsonic_httpClient_URL_prepare(&coverart_url);
+            coverart_url->endpoint = OPENSUBSONIC_ENDPOINT_GETCOVERART;
+            coverart_url->id = strdup(starredStruct->songs[selectedSong].coverArt);
+            opensubsonic_httpClient_formUrl(&coverart_url);
+
+            OSSPQ_AppendToEnd(starredStruct->songs[selectedSong].title,
+                              starredStruct->songs[selectedSong].album,
+                              starredStruct->songs[selectedSong].artist,
+                              starredStruct->songs[selectedSong].id,
+                              song_url->formedUrl,
+                              coverart_url->formedUrl,
+                              starredStruct->songs[selectedSong].duration,
+                              OSSPQ_MODE_OPENSUBSONIC);
+
+            opensubsonic_httpClient_URL_cleanup(&song_url);
+            opensubsonic_httpClient_URL_cleanup(&coverart_url);
+            selectedSong = -1;                   getAlbumStruct->songs[i].duration);
+            */
+        }
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("Shuffle")) {
+        srand(time(NULL));
+        shuffleAlbum();
+    }
+
+    static int selectedSong = -1;
+    if (hasAlbum) {
+        if (ImGui::BeginChild("Album", ImVec2(0, 200), ImGuiChildFlags_Border)) {
+            for (int i = 0; i < getAlbumStruct->songCount; i++) {
+                if (ImGui::Selectable(getAlbumStruct->songs[i].title, selectedSong == i)) {
+                    selectedSong = i;
+                }
+            }
+        ImGui::EndChild();
+        }
+    }
+
+    ImGui::End();
+}
+
+
+
+
+
+
+
+#include "../localMusicHandler.hpp"
+
+bool hasLocalSongs = false;
+localMusicHandler_songReq_t* songReq;
+
+void getLocalSongs() {
+    songReq = localMusicHandler_test();
+    hasLocalSongs = true;
+}
+
+void showLocalSongs() {
+    
+
+    ImGui::Begin("Local Songs");
+
+    if (!hasLocalSongs) { getLocalSongs(); }
+
+    ImGui::Text("Local Songs");
+
+    static int selectedSong = -1;
+    if (hasLocalSongs) {
+        if (ImGui::BeginChild("LocalSongs", ImVec2(0, 200), ImGuiChildFlags_Border)) {
+            for (int i = 0; i < songReq->songCount; i++) {
+                if (ImGui::Selectable(songReq->songs[i].title, selectedSong == i)) {
+                    selectedSong = i;
+                }
+            }
+        ImGui::EndChild();
+        }
+    }
+
+    if (selectedSong != -1) {
+        // Treat it as radio station for testing
+        char* newPath = NULL;
+        asprintf(&newPath, "file://%s", songReq->songs[selectedSong].path);
+
+        //OSSPlayer_QueueAppend_Radio(songReq->songs[selectedSong].title,
+        //                      songReq->songs[selectedSong].uid,
+        //                      newPath);
+        OSSPQ_AppendToEnd(songReq->songs[selectedSong].title,
+                          NULL,
+                          NULL,
+                          songReq->songs[selectedSong].uid,
+                          newPath,
+                          NULL,
+                          0,
+                          OSSPQ_MODE_LOCALFILE);
+        selectedSong = -1;
+    }
 
     ImGui::End();
 }

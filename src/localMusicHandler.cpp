@@ -84,6 +84,9 @@ void localMusicHandler_scan() {
     } else if (rc == 1) {
         // Table was already made, assume songs were loaded in before
     }
+
+
+    //localMusicHandler_test();
 }
 
 void localMusicHandler_scanDirectory(char* directory) {
@@ -254,4 +257,66 @@ void localMusicHandler_moveSongsToDatabase(int idx) {
     }
 
     sqlite3_finalize(sqlite_stmt);
+}
+
+
+
+
+
+
+
+
+// P.S. Sqlite searching directly is fucking useless
+// Have to use something on top, and just load base shit into memory completely I think
+// Plus how many fucking songs would it take to actually become an issue?
+std::deque<localMusicHandler_AudioObject> localMusicHandler_songReqDeque;
+localMusicHandler_songReq_t* localMusicHandler_test() {
+    // Test
+    sqlite3_stmt* sqlite_stmt;
+    //const char* sqlQuery = "SELECT * FROM local_songs WHERE artistTitle LIKE ?;";
+    const char* sqlQuery = "SELECT * FROM local_songs;";
+
+    if (sqlite3_prepare_v2(sqlite_db, sqlQuery, -1, &sqlite_stmt, NULL) != SQLITE_OK) {
+        printf("fuck\n");
+        //return;
+    }
+    //sqlite3_bind_text(sqlite_stmt, 1, "ch", -1, SQLITE_STATIC);
+
+    // %text% to prevent SQL injection --> %% for % with asprintf, %%%s%%. fucking ridiculous but its it
+    // Also rename these fuckass fields. 'artistTitle' what am I high??
+
+    static int rc = 0;
+    while ((rc = sqlite3_step(sqlite_stmt)) == SQLITE_ROW) {
+        printf("here\n");
+        localMusicHandler_AudioObject audioObject;
+        // TODO THIS IS NOT SAFE HOLY FUCK TESTING ONLY LIKE MEGA ONLY
+        // Could load directly into struct if I know how many songs there will be
+        // Seems to be only able to do that by issuing yet another SQL request
+        audioObject.path = (char*)sqlite3_column_text(sqlite_stmt, 6);
+        audioObject.songTitle = (char*)sqlite3_column_text(sqlite_stmt, 1);
+        audioObject.uid = (char*)sqlite3_column_text(sqlite_stmt, 0);
+        localMusicHandler_songReqDeque.push_back(audioObject);
+    }
+
+    if (sqlite3_step(sqlite_stmt) != SQLITE_DONE) {
+        printf("[LocalMusicHandler] Execution error: %s\n", sqlite3_errmsg(sqlite_db));
+    }
+
+    sqlite3_finalize(sqlite_stmt);
+
+    // Load into actual struct
+    int songCount = localMusicHandler_songReqDeque.size();
+    localMusicHandler_songReq_t* songReq = (localMusicHandler_songReq_t*)malloc(sizeof(localMusicHandler_songReq_t));
+    songReq->songCount = songCount;
+    songReq->songs = (localMusicHandler_songReq_songs_t*)malloc(sizeof(localMusicHandler_songReq_songs_t) * songCount);
+    for (int i = 0; i < songCount; i++) {
+        localMusicHandler_AudioObject audioObject;
+        audioObject = localMusicHandler_songReqDeque.front();
+        localMusicHandler_songReqDeque.pop_front();
+        songReq->songs[i].uid = strdup(audioObject.uid.c_str());
+        songReq->songs[i].title = strdup(audioObject.songTitle.c_str());
+        songReq->songs[i].path = strdup(audioObject.path.c_str());
+    }
+
+    return songReq;
 }

@@ -66,21 +66,23 @@ void discordrpc_update(discordrpc_data** discordrpc_struct) {
     if ((*discordrpc_struct)->state == DISCORDRPC_STATE_IDLE) {
         asprintf(&detailsString, "Idle");
         presence.details = detailsString;
-    } else if ((*discordrpc_struct)->state == DISCORDRPC_STATE_PLAYING_OPENSUBSONIC) {
-        // Playing a song
+    } else if ((*discordrpc_struct)->state == DISCORDRPC_STATE_PLAYING_OPENSUBSONIC ||
+           ((*discordrpc_struct)->state == DISCORDRPC_STATE_PLAYING_LOCALFILE)) {
+        // Playing a song from an OpenSubsonic server
         time_t currentTime = time(NULL);
         asprintf(&detailsString, "%s", (*discordrpc_struct)->songTitle);
         asprintf(&stateString, "by %s", (*discordrpc_struct)->songArtist);
         presence.details = detailsString;
         presence.state = stateString;
-        presence.largeImageKey = (*discordrpc_struct)->coverArtUrl;
+        if ((*discordrpc_struct)->state == DISCORDRPC_STATE_PLAYING_OPENSUBSONIC) {
+            // TODO As of now, local file playback does NOT deal with cover art
+            presence.largeImageKey = (*discordrpc_struct)->coverArtUrl;
+        }
         presence.startTimestamp = (long)currentTime;
         presence.endTimestamp = (long)currentTime + (*discordrpc_struct)->songLength;
         if (configObj->discordrpc_showSysDetails) {
             presence.largeImageText = discordrpc_osString;
         }
-    } else if ((*discordrpc_struct)->state == DISCORDRPC_STATE_PLAYING_LOCALFILE) {
-        //
     } else if ((*discordrpc_struct)->state == DISCORDRPC_STATE_PLAYING_INTERNETRADIO) {
         // Playing an internet radio station
         time_t currentTime = time(NULL);

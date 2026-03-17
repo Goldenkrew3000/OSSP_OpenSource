@@ -44,7 +44,7 @@ static gboolean gst_bus_call(GstBus* bus, GstMessage* message, gpointer data) {
         case GST_MESSAGE_BUFFERING: {
             gint percent = 0;
             gst_message_parse_buffering(message, &percent);
-            printf("Buffering (%d%%)...\n", (int)percent);
+            //printf("Buffering (%d%%)...\n", (int)percent);
             break;
         }
         case GST_MESSAGE_ERROR: {
@@ -57,7 +57,7 @@ static gboolean gst_bus_call(GstBus* bus, GstMessage* message, gpointer data) {
             break;
         }
         case GST_MESSAGE_STATE_CHANGED:
-            printf("State changed\n");
+            //printf("State changed\n");
             break;
         case GST_MESSAGE_NEW_CLOCK:
             //
@@ -361,6 +361,8 @@ int OSSPlayer_GstInit() {
     }
 
     // Initialize reverb
+
+
 }
 
 int OSSPlayer_GstDeInit() {
@@ -430,6 +432,19 @@ void OSSPlayer_GstECont_Pitch_Set(float cents) {
 void OSSPlayer_GstECont_Playbin3_Stop() {
     gst_element_set_state(pipeline, GST_STATE_NULL); // Stop playbin3
     isPlaying = false; // Notify player thread to attempt to load next song
+}
+
+void OSSPlayer_GstECont_Playbin3_PlayPause() {
+    GstState state;
+    gst_element_get_state (pipeline, &state, NULL, 0);
+
+    if (state == GST_STATE_PLAYING) {
+        gst_element_set_state (pipeline, GST_STATE_PAUSED);
+        g_print ("Paused\n");
+    } else {
+        gst_element_set_state (pipeline, GST_STATE_PLAYING);
+        g_print ("Playing\n");
+    }
 }
 
 /*

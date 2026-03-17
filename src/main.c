@@ -17,12 +17,20 @@
 #include "player/player.h"
 #include "discordrpc.h"
 
+#include "localRadioDBHandler.h"
+#include "libopensubsonic/endpoint_getInternetRadioStations.h"
+#include "libopensubsonic/httpclient.h"
+#include "socket.h"
+#include "localMusicHandler.hpp"
+
 static int rc = 0;
 configHandler_config_t* configObj = NULL;
 int checkConfigFile();
 int validateConnection();
 
 int main(int argc, char** argv) {
+    //localRadioDBHandler_Init();
+
     // Read config file
     rc = configHandler_Read(&configObj);
     if (rc != 0) {
@@ -67,8 +75,11 @@ int main(int argc, char** argv) {
     discordrpc_update(&discordrpc);
     discordrpc_struct_deinit(&discordrpc);
 
+    //localMusicHandler_scan();
+
     // Launch QT frontend
     gui_entry();
+    //socketHandler_init();
 
     // Cleanup and exit
     configHandler_Free(&configObj);
