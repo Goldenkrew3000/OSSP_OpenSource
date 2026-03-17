@@ -12,6 +12,7 @@ find_package(OpenGL REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
+find_package(Vulkan REQUIRED)
 
 add_subdirectory(external/discord-rpc)
 
@@ -54,6 +55,7 @@ add_executable(ossp MACOSX_BUNDLE
     external/imgui/imgui_demo.cpp
     external/imgui/backends/imgui_impl_sdl2.cpp
     external/imgui/backends/imgui_impl_opengl2.cpp
+    external/imgui/backends/imgui_impl_vulkan.cpp
     external/sqlite3/sqlite3.c
 )
 
@@ -82,4 +84,4 @@ else()
     include_directories(${GSTREAMER_INCLUDE_DIRS} ${AVFORMAT_INCLUDE_DIR} ${AVUTIL_INCLUDE_DIRS})
 endif()
 
-target_link_libraries(ossp PRIVATE OpenSSL::SSL OpenSSL::Crypto CURL::libcurl SDL2::SDL2 ${OPENGL_LIBRARIES} discord-rpc ${BZ2_LIBRARIES} ${GSTREAMER_LIBRARIES} ${AVFORMAT_LIBRARIES} ${AVUTIL_LIBRARIES} avformat avutil)
+target_link_libraries(ossp PRIVATE OpenSSL::SSL OpenSSL::Crypto CURL::libcurl SDL2::SDL2 ${OPENGL_LIBRARIES} Vulkan::Vulkan discord-rpc ${BZ2_LIBRARIES} ${GSTREAMER_LIBRARIES} ${AVFORMAT_LIBRARIES} ${AVUTIL_LIBRARIES} avformat avutil)
