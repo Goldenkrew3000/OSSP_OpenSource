@@ -39,15 +39,15 @@ int main(int argc, char** argv) {
     removePath(bundle_path);
     printf("[OSSPL] Bundle Path: %s\n", bundle_path.c_str());
 
-    // Create DYLD_LIBRARY_PATH - 'Bundle/sysroot/lib'
+    // Create DYLD_LIBRARY_PATH - 'Bundle/Contents/Sysroot/lib'
     std::string dyld_library_path = bundle_path;
-    dyld_library_path += "/sysroot/lib";
+    dyld_library_path += "/Contents/Sysroot/lib";
     dyld_library_path = "DYLD_LIBRARY_PATH=" + dyld_library_path;
     char* c_dyld_library_path = strdup(dyld_library_path.c_str());
 
-    // Create LV2_PATH - 'Bundle/sysroot/lib/lv2'
+    // Create LV2_PATH - 'Bundle/Contents/Sysroot/lib/lv2'
     std::string lv2_path = bundle_path;
-    lv2_path += "/sysroot/lib/lv2";
+    lv2_path += "/Contents/Sysroot/lib/lv2";
     lv2_path = "LV2_PATH=" + lv2_path;
     char* c_lv2_path = strdup(lv2_path.c_str());
 
