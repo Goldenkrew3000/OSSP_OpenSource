@@ -5,9 +5,6 @@
  * Darwin XNU / macOS OSSP Bundle Launcher
  */
 
-// Yes I know this is some of the worst written code, like ever
-// I will clean this up later, it just has to work
-
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -40,7 +37,7 @@ int main(int argc, char** argv) {
     removePath(bundle_path);
     removePath(bundle_path);
     removePath(bundle_path);
-    printf("Bundle Path: %s\n", bundle_path.c_str());
+    printf("[OSSPL] Bundle Path: %s\n", bundle_path.c_str());
 
     // Create DYLD_LIBRARY_PATH - 'Bundle/sysroot/lib'
     std::string dyld_library_path = bundle_path;
@@ -65,16 +62,17 @@ int main(int argc, char** argv) {
     std::string pwd_env = home_env_orig + "/.config/ossp";
     pwd_env = "PWD=" + pwd_env;
     char* c_pwd_env = strdup(pwd_env.c_str());
-    printf("New PWD: %s\n", c_pwd_env);
 
-    char test[256];
-    strcpy(test, c_dyld_library_path);
-    char test2[256];
-    strcpy(test2, c_lv2_path);
-    char test3[256];
-    strcpy(test3, c_home_env_b);
-    char test4[256];
-    strcpy(test4, c_pwd_env);
+    // Make new environment
+    char envp0[PATH_MAX];
+    char envp1[PATH_MAX];
+    char envp2[PATH_MAX];
+    char envp3[PATH_MAX];
+
+    strncpy(envp0, c_dyld_library_path, PATH_MAX);
+    strncpy(envp1, c_lv2_path, PATH_MAX);
+    strncpy(envp2, c_home_env_b, PATH_MAX);
+    strncpy(envp3, c_pwd_env, PATH_MAX);
     free(c_dyld_library_path);
     free(c_lv2_path);
     free(c_home_env_b);
@@ -83,19 +81,19 @@ int main(int argc, char** argv) {
     // NOTE: I have to package the environment variables this way because if they are set through **environ,
     // macOS sanitizes it and OSSP doesn't get it
     char* envp[] = {
-        test3,
-        test,
-        test2,
-        test4,
+        envp0,
+        envp1,
+        envp2,
+        envp3,
         NULL
     };
 
-    printf("--------------------------------\n");
-    printf("%s\n", envp[0]);
-    printf("%s\n", envp[1]);
-    printf("%s\n", envp[2]);
-    printf("%s\n", envp[3]);
-    printf("--------------------------------\n");
+    // Print new environment to console
+    printf("[OSSPL] New environment:\n");
+    printf("envp0: %s\n", envp[0]);
+    printf("envp1: %s\n", envp[1]);
+    printf("envp2: %s\n", envp[2]);
+    printf("envp3: %s\n", envp[3]);
 
     // Create OSSP path and run
     std::string ossp_path = macho_path;
