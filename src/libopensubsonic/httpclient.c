@@ -35,6 +35,7 @@ void opensubsonic_httpClient_URL_prepare(opensubsonic_httpClient_URL_t** urlObj)
 }
 
 void opensubsonic_httpClient_URL_cleanup(opensubsonic_httpClient_URL_t** urlObj) {
+    logger_log_general(__func__, "Freeing URL object with endpoint ID of %d.", (*urlObj)->endpoint);
     if ((*urlObj)->formedUrl != NULL) { free((*urlObj)->formedUrl); }
     if ((*urlObj)->id != NULL) { free((*urlObj)->id); }
     if (*urlObj != NULL) { free(*urlObj); }

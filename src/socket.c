@@ -5,6 +5,12 @@
  * Info: Socket Handler
  */
 
+/*
+ * Socket Policy:
+ * - The client shall not send a URL back to the server
+ * - The client shall only send back IDs
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,9 +24,11 @@
 #include "external/cJSON.h"
 #include "configHandler.h"
 #include "player/player.h"
+#include "player/playQueue.hpp"
 #include "libopensubsonic/utils.h"
 #include "libopensubsonic/httpclient.h"
 #include "libopensubsonic/endpoint_getStarred.h"
+#include "libopensubsonic/endpoint_getSong.h"
 #include "socket.h"
 
 static int server_fd = -1;
@@ -175,7 +183,8 @@ void socketHandler_performAction(int id, char** retDataStr, cJSON** cliReqJson) 
             cJSON_AddItemToObject(retData, "songs", songArray);
 
             for (int i = 0; i < getStarredStruct->songCount; i++) {
-
+                // NOTE: For anything the client isn't directly accessing, only pass IDs
+                // Client uses cover art directly, so it needs a URL, but it only needs to pass a song ID back
                 cJSON* song = cJSON_CreateObject();
                 cJSON_AddItemToObject(song, "title", cJSON_CreateString(getStarredStruct->songs[i].title));
                 cJSON_AddItemToObject(song, "album", cJSON_CreateString(getStarredStruct->songs[i].album));
@@ -185,7 +194,7 @@ void socketHandler_performAction(int id, char** retDataStr, cJSON** cliReqJson) 
                 cJSON_AddItemToObject(song, "duration", cJSON_CreateNumber(getStarredStruct->songs[i].duration));
                 cJSON_AddItemToObject(song, "albumId", cJSON_CreateString(getStarredStruct->songs[i].albumId));
                 cJSON_AddItemToObject(song, "artistId", cJSON_CreateString(getStarredStruct->songs[i].artistId));
-                
+
                 // Convert cover art ID to URL
                 opensubsonic_httpClient_URL_t* coverArtUrl = malloc(sizeof(opensubsonic_httpClient_URL_t));
                 opensubsonic_httpClient_URL_prepare(&coverArtUrl);
@@ -202,6 +211,47 @@ void socketHandler_performAction(int id, char** retDataStr, cJSON** cliReqJson) 
             cJSON_Delete(retData);
 
             opensubsonic_getStarred_struct_free(&getStarredStruct); // Free Struct
+            break;
+
+
+
+        case OSSP_SOCKET_ACTION_NOW_PLAYING:
+            printf("[SocketHandler] Client requested Now Playing.\n");
+
+            cJSON* retDatab = cJSON_CreateObject();
+
+            int currentPos = OSSPQ_getCurrentPos();
+            if (currentPos == 0) {
+                // No songs added to queue yet
+                cJSON_AddItemToObject(retDatab, "totalQueueCount", cJSON_CreateNumber(0));
+            } else {
+                // At least a single song has been added to the queue
+                OSSPQ_SongStruct* nowPlaying = OSSPQ_getAtPos(currentPos);
+                if (nowPlaying == NULL) {
+                    // Could not pull queue item
+                    printf("[SocketHandler] --\n");
+                }
+
+                cJSON_AddItemToObject(retDatab, "songTitle", cJSON_CreateString(nowPlaying->title));
+                cJSON_AddItemToObject(retDatab, "songAlbum", cJSON_CreateString(nowPlaying->album));
+                cJSON_AddItemToObject(retDatab, "songArtist", cJSON_CreateString(nowPlaying->artist));
+                //cJSON_AddItemToObject(retData, "duration", cJSON_CreateString());
+                cJSON_AddItemToObject(retDatab, "coverArtUrl", cJSON_CreateString(nowPlaying->coverArtUrl));
+            }
+
+            
+
+            
+
+            printf("%s\n", cJSON_PrintUnformatted(retDatab));
+            
+
+            break;
+
+
+        case OSSP_SOCKET_ACTION_ADD_TO_QUEUE:
+            printf("[SocketHandler] Client requested OSSP_SOCKET_ACTION_ADD_TO_QUEUE.\n");
+            OSSPS_SocketAction_Add_To_Queue(retDataStr, cliReqJson);
             break;
 
 
@@ -241,7 +291,58 @@ void socketHandler_performAction(int id, char** retDataStr, cJSON** cliReqJson) 
 
 
 
+void OSSPS_SocketAction_Add_To_Queue(char** retDataStr, cJSON** cliReqJson) {
+    // Pull ID from request JSON
+    char* id = NULL;
+    OSS_Psoj(&id, *cliReqJson, "songId");
+    if (id == NULL) {
+        printf("[SocketHandler] OSSP_SOCKET_ACTION_ADD_TO_QUEUE failed - 'id' is null.\n");
+        *retDataStr = strdup("NOTOK");
+        return;
+    }
 
+    // Create Stream URL from ID
+    opensubsonic_httpClient_URL_t* streamUrl = malloc(sizeof(opensubsonic_httpClient_URL_t));
+    opensubsonic_httpClient_URL_prepare(&streamUrl);
+    streamUrl->endpoint = OPENSUBSONIC_ENDPOINT_STREAM;
+    streamUrl->id = strdup(id);
+    opensubsonic_httpClient_formUrl(&streamUrl);
+
+    // Contact the /getSong endpoint
+    opensubsonic_httpClient_URL_t* songUrl = malloc(sizeof(opensubsonic_httpClient_URL_t));
+    opensubsonic_httpClient_URL_prepare(&songUrl);
+    songUrl->endpoint = OPENSUBSONIC_ENDPOINT_GETSONG;
+    songUrl->id = strdup(id);
+    opensubsonic_httpClient_formUrl(&songUrl);
+    opensubsonic_getSong_struct* getSongStruct;
+    opensubsonic_httpClient_fetchResponse(&songUrl, (void**)&getSongStruct);
+
+    // Create Cover Art URL from ID
+    opensubsonic_httpClient_URL_t* coverartUrl = (opensubsonic_httpClient_URL_t*)malloc(sizeof(opensubsonic_httpClient_URL_t));
+    opensubsonic_httpClient_URL_prepare(&coverartUrl);
+    coverartUrl->endpoint = OPENSUBSONIC_ENDPOINT_GETCOVERART;
+    coverartUrl->id = strdup(id);
+    opensubsonic_httpClient_formUrl(&coverartUrl);
+
+    // Append to queue
+    OSSPQ_AppendToEnd(getSongStruct->title,
+                      getSongStruct->album,
+                      getSongStruct->artist,
+                      id,
+                      streamUrl->formedUrl,
+                      coverartUrl->formedUrl,
+                      getSongStruct->duration,
+                      OSSPQ_MODE_OPENSUBSONIC);
+
+    // Free memory
+    opensubsonic_getSong_struct_free(&getSongStruct);
+    opensubsonic_httpClient_URL_cleanup(&songUrl);
+    opensubsonic_httpClient_URL_cleanup(&streamUrl);
+    opensubsonic_httpClient_URL_cleanup(&coverartUrl);
+
+    *retDataStr = strdup("OK");
+    return;
+}
 
 
 
