@@ -19,6 +19,8 @@
 #include <deque>
 #include "playQueue.hpp"
 
+int OSSPQ_currentPos = 0;
+
 // C++ interface for storing song queue data (C interface is in the header)
 class OSSPQ_SongObject {
     public:
@@ -66,6 +68,7 @@ int OSSPQ_AppendToEnd(char* title, char* album, char* artist, char* id, char* st
     return 0;
 }
 
+/*
 OSSPQ_SongStruct* OSSPQ_PopFromFront() {
     // Check if song queue is empty, if not, then pop oldest
     if (OSSPQ_SongQueue.empty()) {
@@ -73,6 +76,59 @@ OSSPQ_SongStruct* OSSPQ_PopFromFront() {
     }
     OSSPQ_SongObject songObject = OSSPQ_SongQueue.front();
     OSSPQ_SongQueue.pop_front();
+
+    // Allocate, initialize, and fill C compatible song object
+    OSSPQ_SongStruct* songObjectC = (OSSPQ_SongStruct*)malloc(sizeof(OSSPQ_SongStruct));
+    songObjectC->title = NULL;
+    songObjectC->album = NULL;
+    songObjectC->artist = NULL;
+    songObjectC->id = NULL;
+    songObjectC->streamUrl = NULL;
+    songObjectC->coverArtUrl = NULL;
+    songObjectC->duration = 0;
+    songObjectC->mode = 0;
+
+    if (songObject.mode == OSSPQ_MODE_OPENSUBSONIC || songObject.mode == OSSPQ_MODE_LOCALFILE) {
+        songObjectC->title = strdup(songObject.title.c_str());
+        songObjectC->album = strdup(songObject.album.c_str());
+        songObjectC->artist = strdup(songObject.artist.c_str());
+        songObjectC->id = strdup(songObject.id.c_str());
+        songObjectC->streamUrl = strdup(songObject.streamUrl.c_str());
+        songObjectC->coverArtUrl = strdup(songObject.coverArtUrl.c_str());
+        songObjectC->duration = songObject.duration;
+        songObjectC->mode = songObject.mode;
+    } else if (songObject.mode == OSSPQ_MODE_INTERNETRADIO) {
+        songObjectC->title = strdup(songObject.title.c_str());
+        songObjectC->id = strdup(songObject.id.c_str());
+        songObjectC->streamUrl = strdup(songObject.streamUrl.c_str());
+    }
+    
+    return songObjectC;
+}
+*/
+
+int OSSPQ_getCurrentPos() {
+    return OSSPQ_currentPos;
+}
+
+int OSSPQ_getTotalPos() {
+    return OSSPQ_SongQueue.size();
+}
+
+int OSSPQ_advancePos() {
+    OSSPQ_currentPos += 1;
+}
+
+int OSSPQ_backtrackPos() {
+    OSSPQ_currentPos -= 1;
+}
+
+OSSPQ_SongStruct* OSSPQ_getAtPos(int pos) {
+    // Check if song queue is empty, if not, then pop oldest
+    if (OSSPQ_SongQueue.empty()) {
+        return NULL;
+    }
+    OSSPQ_SongObject songObject = OSSPQ_SongQueue[pos];
 
     // Allocate, initialize, and fill C compatible song object
     OSSPQ_SongStruct* songObjectC = (OSSPQ_SongStruct*)malloc(sizeof(OSSPQ_SongStruct));

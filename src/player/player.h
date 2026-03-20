@@ -29,6 +29,9 @@ void OSSPlayer_GstECont_Pitch_Set(float cents);
 void OSSPlayer_GstECont_Playbin3_Stop();
 void OSSPlayer_GstECont_Playbin3_PlayPause();
 
+void OSSPlayer_GstECont_Playbin3_Prev();
+void OSSPlayer_GstECont_Playbin3_Next();
+
 float OSSPlayer_DbLinMul(float db);
 float OSSPlayer_PitchFollow(float freq, float semitone);
 float OSSPlayer_CentsToPSF(float cents);

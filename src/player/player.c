@@ -38,6 +38,7 @@ static gboolean gst_bus_call(GstBus* bus, GstMessage* message, gpointer data) {
     switch (GST_MESSAGE_TYPE(message)) {
         case GST_MESSAGE_EOS:
             logger_log_important(__func__, "[GBus] End of stream");
+            OSSPQ_advancePos(); // Move to next song in queue
             gst_element_set_state(pipeline, GST_STATE_NULL);
             isPlaying = false;
             break;
@@ -122,7 +123,7 @@ void* OSSPlayer_ThrdInit(void* arg) {
             // Player is not playing and a song is in the song queue
 
             // Pull new song from the song queue
-            OSSPQ_SongStruct* songObject = OSSPQ_PopFromFront();
+            OSSPQ_SongStruct* songObject = OSSPQ_getAtPos(OSSPQ_getCurrentPos());
             if (songObject == NULL) {
                 // Severe error - There was an item in the queue, but fetching it didn't work
                 printf("[OSSPlayer]\n");
@@ -189,7 +190,8 @@ void* OSSPlayer_ThrdInit(void* arg) {
             }
         }
 
-        if (internal_OSSPQ_GetItemCount() == 0 && !isPlaying) {
+        //if (internal_OSSPQ_GetItemCount() == 0 && !isPlaying) {
+        if (OSSPQ_getCurrentPos() != OSSPQ_getTotalPos() && !isPlaying) {
             // No song currently playing, and the queue is empty
 
             // Only send idle Discord RPC if needed to avoid spamming
@@ -430,9 +432,14 @@ void OSSPlayer_GstECont_Pitch_Set(float cents) {
 }
 
 void OSSPlayer_GstECont_Playbin3_Stop() {
+    OSSPQ_advancePos();
     gst_element_set_state(pipeline, GST_STATE_NULL); // Stop playbin3
     isPlaying = false; // Notify player thread to attempt to load next song
 }
+
+
+
+
 
 void OSSPlayer_GstECont_Playbin3_PlayPause() {
     GstState state;
@@ -445,6 +452,22 @@ void OSSPlayer_GstECont_Playbin3_PlayPause() {
         gst_element_set_state (pipeline, GST_STATE_PLAYING);
         g_print ("Playing\n");
     }
+}
+
+void OSSPlayer_GstECont_Playbin3_Prev() {
+    // Move queue back by one, then stop playbin3 and notify player thread
+    printf("[OSSPP] Moving the player queue back by one.\n");
+    OSSPQ_backtrackPos();
+    gst_element_set_state(pipeline, GST_STATE_NULL);
+    isPlaying = false;
+}
+
+void OSSPlayer_GstECont_Playbin3_Next() {
+    // Same as *Playbin3_Prev(), but advance queue by one
+    printf("[OSSPP] Moving the player forward back by one.\n");
+    OSSPQ_advancePos();
+    gst_element_set_state(pipeline, GST_STATE_NULL);
+    isPlaying = false;
 }
 
 /*

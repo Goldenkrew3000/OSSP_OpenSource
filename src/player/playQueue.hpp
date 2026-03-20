@@ -28,12 +28,19 @@ typedef struct {
 } OSSPQ_SongStruct;
 
 int OSSPQ_AppendToEnd(char* title, char* album, char* artist, char* id, char* streamUrl, char* coverArtUrl, long duration, int mode);
-OSSPQ_SongStruct* OSSPQ_PopFromFront();
+//OSSPQ_SongStruct* OSSPQ_PopFromFront();
 void OSSPQ_FreeSongObjectC(OSSPQ_SongStruct* songObjectC);
 
 // TODO
 char* internal_OSSPQ_GetTitleAtIndex(int idx);
 int internal_OSSPQ_GetItemCount();
+
+// Testing
+int OSSPQ_getCurrentPos();
+int OSSPQ_getTotalPos();
+int OSSPQ_advancePos();
+int OSSPQ_backtrackPos();
+OSSPQ_SongStruct* OSSPQ_getAtPos(int pos);
 
 #ifdef __cplusplus
 }
