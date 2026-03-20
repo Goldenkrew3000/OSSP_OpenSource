@@ -433,6 +433,7 @@ ImGui_ImplSDL2_InitForVulkan(window);
                 done = true;
             }
         }
+        
         if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) {
             SDL_Delay(10);
             continue;
@@ -658,6 +659,10 @@ void showAudioSettings() {
 
     if(ImGui::Button("Skip")) {
         OSSPlayer_GstECont_Playbin3_Stop();
+    }
+
+    if(ImGui::Button("Play/Pause")) {
+        OSSPlayer_GstECont_Playbin3_PlayPause();
     }
 
     ImGui::End();
