@@ -22,7 +22,8 @@ add_executable(ossp MACOSX_BUNDLE
     discordrpc.c
     localRadioDBHandler.c
     localMusicHandler.cpp
-    socket.c
+    socket/socket.c
+    socket/socketActions.c
     gui/gui_entry.cpp
     player/player.c
     player/playQueue.cpp
