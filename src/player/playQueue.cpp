@@ -68,45 +68,6 @@ int OSSPQ_AppendToEnd(char* title, char* album, char* artist, char* id, char* st
     return 0;
 }
 
-/*
-OSSPQ_SongStruct* OSSPQ_PopFromFront() {
-    // Check if song queue is empty, if not, then pop oldest
-    if (OSSPQ_SongQueue.empty()) {
-        return NULL;
-    }
-    OSSPQ_SongObject songObject = OSSPQ_SongQueue.front();
-    OSSPQ_SongQueue.pop_front();
-
-    // Allocate, initialize, and fill C compatible song object
-    OSSPQ_SongStruct* songObjectC = (OSSPQ_SongStruct*)malloc(sizeof(OSSPQ_SongStruct));
-    songObjectC->title = NULL;
-    songObjectC->album = NULL;
-    songObjectC->artist = NULL;
-    songObjectC->id = NULL;
-    songObjectC->streamUrl = NULL;
-    songObjectC->coverArtUrl = NULL;
-    songObjectC->duration = 0;
-    songObjectC->mode = 0;
-
-    if (songObject.mode == OSSPQ_MODE_OPENSUBSONIC || songObject.mode == OSSPQ_MODE_LOCALFILE) {
-        songObjectC->title = strdup(songObject.title.c_str());
-        songObjectC->album = strdup(songObject.album.c_str());
-        songObjectC->artist = strdup(songObject.artist.c_str());
-        songObjectC->id = strdup(songObject.id.c_str());
-        songObjectC->streamUrl = strdup(songObject.streamUrl.c_str());
-        songObjectC->coverArtUrl = strdup(songObject.coverArtUrl.c_str());
-        songObjectC->duration = songObject.duration;
-        songObjectC->mode = songObject.mode;
-    } else if (songObject.mode == OSSPQ_MODE_INTERNETRADIO) {
-        songObjectC->title = strdup(songObject.title.c_str());
-        songObjectC->id = strdup(songObject.id.c_str());
-        songObjectC->streamUrl = strdup(songObject.streamUrl.c_str());
-    }
-    
-    return songObjectC;
-}
-*/
-
 int OSSPQ_getCurrentPos() {
     return OSSPQ_currentPos;
 }
@@ -168,13 +129,4 @@ void OSSPQ_FreeSongObjectC(OSSPQ_SongStruct* songObjectC) {
     if (songObjectC->streamUrl != NULL) { free(songObjectC->streamUrl); }
     if (songObjectC->coverArtUrl != NULL) { free(songObjectC->coverArtUrl); }
     if (songObjectC != NULL) { free(songObjectC); }
-}
-
-// TODO Bullshit functions for dealing with Imgui
-char* internal_OSSPQ_GetTitleAtIndex(int idx) {
-    return (char*)OSSPQ_SongQueue[idx].title.c_str();
-}
-
-int internal_OSSPQ_GetItemCount() {
-    return OSSPQ_SongQueue.size();
 }

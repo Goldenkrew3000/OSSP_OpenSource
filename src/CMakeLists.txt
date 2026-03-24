@@ -8,11 +8,8 @@ project(ossp)
 
 find_package(CURL REQUIRED)
 find_package(OpenSSL REQUIRED)
-find_package(OpenGL REQUIRED)
-find_package(SDL2 REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
-find_package(Vulkan REQUIRED)
 
 add_subdirectory(external/discord-rpc)
 
@@ -24,7 +21,6 @@ add_executable(ossp MACOSX_BUNDLE
     localMusicHandler.cpp
     socket/socket.c
     socket/socketActions.c
-    gui/gui_entry.cpp
     player/player.c
     player/playQueue.cpp
     libopensubsonic/crypto.c
@@ -49,14 +45,6 @@ add_executable(ossp MACOSX_BUNDLE
     external/cJSON_Utils.c
     external/libcurl_uriescape.c
     external/md5.c
-    external/imgui/imgui.cpp
-    external/imgui/imgui_tables.cpp
-    external/imgui/imgui_draw.cpp
-    external/imgui/imgui_widgets.cpp
-    external/imgui/imgui_demo.cpp
-    external/imgui/backends/imgui_impl_sdl2.cpp
-    external/imgui/backends/imgui_impl_opengl2.cpp
-    external/imgui/backends/imgui_impl_vulkan.cpp
     external/sqlite3/sqlite3.c
 )
 
@@ -76,8 +64,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     pkg_check_modules(AVFORMAT REQUIRED libavformat)
     pkg_check_modules(AVUTIL REQUIRED libavutil)
     pkg_check_modules(BZ2 REQUIRED bzip2)
-    pkg_check_modules(SDL2 REQUIRED sdl2)
-    include_directories(${GSTREAMER_INCLUDE_DIRS} ${AVFORMAT_INCLUDE_DIR} ${AVUTIL_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS})
+    include_directories(${GSTREAMER_INCLUDE_DIRS} ${AVFORMAT_INCLUDE_DIR} ${AVUTIL_INCLUDE_DIRS})
 else()
     message("--- Detected generic operating system ---")
     pkg_check_modules(AVFORMAT REQUIRED libavformat)
@@ -85,4 +72,4 @@ else()
     include_directories(${GSTREAMER_INCLUDE_DIRS} ${AVFORMAT_INCLUDE_DIR} ${AVUTIL_INCLUDE_DIRS})
 endif()
 
-target_link_libraries(ossp PRIVATE OpenSSL::SSL OpenSSL::Crypto CURL::libcurl SDL2::SDL2 ${OPENGL_LIBRARIES} Vulkan::Vulkan discord-rpc ${BZ2_LIBRARIES} ${GSTREAMER_LIBRARIES} ${AVFORMAT_LIBRARIES} ${AVUTIL_LIBRARIES} avformat avutil)
+target_link_libraries(ossp PRIVATE OpenSSL::SSL OpenSSL::Crypto CURL::libcurl discord-rpc ${BZ2_LIBRARIES} ${GSTREAMER_LIBRARIES} ${AVFORMAT_LIBRARIES} ${AVUTIL_LIBRARIES} avformat avutil)

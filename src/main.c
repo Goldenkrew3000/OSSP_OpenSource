@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-#include "gui/gui_entry.hpp"
 #include "libopensubsonic/crypto.h"
 #include "libopensubsonic/httpclient.h"
 #include "libopensubsonic/endpoint_ping.h"
@@ -20,7 +19,7 @@
 #include "localRadioDBHandler.h"
 #include "libopensubsonic/endpoint_getInternetRadioStations.h"
 #include "libopensubsonic/httpclient.h"
-#include "socket.h"
+#include "socket/socket.h"
 #include "localMusicHandler.hpp"
 
 static int rc = 0;
@@ -77,9 +76,8 @@ int main(int argc, char** argv) {
 
     //localMusicHandler_scan();
 
-    // Launch QT frontend
-    gui_entry();
-    //socketHandler_init();
+    // Launch socket server
+    socketHandler_init();
 
     // Cleanup and exit
     configHandler_Free(&configObj);

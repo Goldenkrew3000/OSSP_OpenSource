@@ -120,7 +120,7 @@ void* OSSPlayer_ThrdInit(void* arg) {
 
     // Poll play queue for new items to play
     while (true) { // TODO use global bool instead
-        if (internal_OSSPQ_GetItemCount() != 0 && isPlaying == false) {
+        if (OSSPQ_getTotalPos() != 0 && isPlaying == false) {
             // Player is not playing and a song is in the song queue
 
             // Pull new song from the song queue
@@ -522,6 +522,14 @@ float OSSPlayer_CentsToPSF(float cents) {
  * Functions that utilize Discord RPC
  */
 void OSSPlayer_DiscordRPC_SendPaused() {
+    discordrpc_data* discordrpc = NULL;
+    discordrpc_struct_init(&discordrpc);
+    discordrpc->state = DISCORDRPC_STATE_PAUSED;
+    discordrpc_update(&discordrpc);
+    discordrpc_struct_deinit(&discordrpc);
+}
+
+void OSSPlayer_DiscordRPC_SendIdle() {
     discordrpc_data* discordrpc = NULL;
     discordrpc_struct_init(&discordrpc);
     discordrpc->state = DISCORDRPC_STATE_PAUSED;

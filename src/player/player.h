@@ -41,6 +41,7 @@ float OSSPlayer_PitchFollow(float freq, float semitone);
 float OSSPlayer_CentsToPSF(float cents);
 
 void OSSPlayer_DiscordRPC_SendPaused();
+void OSSPlayer_DiscordRPC_SendIdle();
 void OSSPlayer_DiscordRPC_SendPlaying(time_t startTime);
 
 #ifdef __cplusplus
