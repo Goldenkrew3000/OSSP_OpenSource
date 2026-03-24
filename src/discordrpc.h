@@ -6,6 +6,7 @@
 
 #ifndef _DISCORDRPC_H
 #define _DISCORDRPC_H
+#include <time.h>
 
 #define DISCORDRPC_STATE_IDLE 0
 #define DISCORDRPC_STATE_PLAYING_OPENSUBSONIC 1
@@ -16,6 +17,7 @@
 typedef struct {
     int state;
     long songLength;
+    time_t startTime;
     char* songTitle;
     char* songArtist;
     char* coverArtUrl;

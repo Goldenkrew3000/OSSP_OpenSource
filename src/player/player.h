@@ -6,6 +6,7 @@
 
 #ifndef _PLAYER_H
 #define _PLAYER_H
+#include <time.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,17 +25,23 @@ float OSSPlayer_GstECont_InVolume_Get();
 void OSSPlayer_GstECont_InVolume_set(float val);
 float OSSPlayer_GstECont_OutVolume_Get();
 void OSSPlayer_GstECont_OutVolume_set(float val);
+float OSSPlayer_GstECont_Playbin3_Position_Get();
+void OSSPLayer_GstECont_Playbin3_Position_Set(float seek_pos);
 float OSSPlayer_GstECont_Pitch_Get();
 void OSSPlayer_GstECont_Pitch_Set(float cents);
 void OSSPlayer_GstECont_Playbin3_Stop();
 void OSSPlayer_GstECont_Playbin3_PlayPause();
-
 void OSSPlayer_GstECont_Playbin3_Prev();
 void OSSPlayer_GstECont_Playbin3_Next();
+void OSSPlayer_GstECont_Playbin3_StartQueue();
+void OSSPlayer_GstECont_Playbin3_EndQueue();
 
 float OSSPlayer_DbLinMul(float db);
 float OSSPlayer_PitchFollow(float freq, float semitone);
 float OSSPlayer_CentsToPSF(float cents);
+
+void OSSPlayer_DiscordRPC_SendPaused();
+void OSSPlayer_DiscordRPC_SendPlaying(time_t startTime);
 
 #ifdef __cplusplus
 }

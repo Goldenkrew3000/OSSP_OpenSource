@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <time.h>
 #include "../configHandler.h"
 #include "../discordrpc.h"
 #include "../libopensubsonic/logger.h"
@@ -135,6 +136,7 @@ void* OSSPlayer_ThrdInit(void* arg) {
                 discordrpc_data* discordrpc = NULL;
                 discordrpc_struct_init(&discordrpc);
                 discordrpc->state = DISCORDRPC_STATE_PLAYING_INTERNETRADIO;
+                discordrpc->startTime = time(NULL);
                 discordrpc->songTitle = strdup(songObject->title);
                 discordrpc_update(&discordrpc);
                 discordrpc_struct_deinit(&discordrpc);
@@ -149,6 +151,7 @@ void* OSSPlayer_ThrdInit(void* arg) {
                 discordrpc_data* discordrpc = NULL;
                 discordrpc_struct_init(&discordrpc);
                 discordrpc->state = DISCORDRPC_STATE_PLAYING_OPENSUBSONIC;
+                discordrpc->startTime = time(NULL);
                 discordrpc->songLength = songObject->duration;
                 discordrpc->songTitle = strdup(songObject->title);
                 discordrpc->songArtist = strdup(songObject->artist);
@@ -174,6 +177,7 @@ void* OSSPlayer_ThrdInit(void* arg) {
                 discordrpc_data* discordrpc = NULL;
                 discordrpc_struct_init(&discordrpc);
                 discordrpc->state = DISCORDRPC_STATE_PLAYING_LOCALFILE;
+                discordrpc->startTime = time(NULL);
                 discordrpc->songLength = songObject->duration;
                 discordrpc->songTitle = strdup(songObject->title);
                 discordrpc->songArtist = strdup(songObject->artist);
@@ -190,8 +194,7 @@ void* OSSPlayer_ThrdInit(void* arg) {
             }
         }
 
-        //if (internal_OSSPQ_GetItemCount() == 0 && !isPlaying) {
-        if (OSSPQ_getCurrentPos() != OSSPQ_getTotalPos() && !isPlaying) {
+        if (OSSPQ_getCurrentPos() == OSSPQ_getTotalPos() && isPlaying == false) {
             // No song currently playing, and the queue is empty
 
             // Only send idle Discord RPC if needed to avoid spamming
@@ -422,6 +425,19 @@ void OSSPlayer_GstECont_OutVolume_set(float val) {
     g_object_set(out_volume, "volume", val, NULL);
 }
 
+float OSSPlayer_GstECont_Playbin3_Position_Get() {
+    gint64 seek_pos;
+    if (gst_element_query_position(playbin, GST_FORMAT_TIME, &seek_pos)) {
+        return (float)seek_pos / GST_SECOND;
+    } else {
+        return (float)0.00;
+    }
+}
+
+void OSSPLayer_GstECont_Playbin3_Position_Set(float seek_pos) {
+    gst_element_seek_simple(playbin, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT, (gint64)(seek_pos * GST_SECOND));
+}
+
 float OSSPlayer_GstECont_Pitch_Get() {
     //
 }
@@ -437,20 +453,25 @@ void OSSPlayer_GstECont_Playbin3_Stop() {
     isPlaying = false; // Notify player thread to attempt to load next song
 }
 
-
-
-
-
 void OSSPlayer_GstECont_Playbin3_PlayPause() {
     GstState state;
-    gst_element_get_state (pipeline, &state, NULL, 0);
+    gst_element_get_state(pipeline, &state, NULL, 0);
 
     if (state == GST_STATE_PLAYING) {
         gst_element_set_state (pipeline, GST_STATE_PAUSED);
-        g_print ("Paused\n");
+
+        // Issue Pause to Discord RPC
+        OSSPlayer_DiscordRPC_SendPaused();
     } else {
         gst_element_set_state (pipeline, GST_STATE_PLAYING);
-        g_print ("Playing\n");
+
+        // Get current position in song, and find start time for Discord RPC
+        float curr_pos = OSSPlayer_GstECont_Playbin3_Position_Get();
+        time_t curr_time = time(NULL);
+        time_t start_time = curr_time - (int)curr_pos;
+
+        // Issue Playing to Discord RPC
+        OSSPlayer_DiscordRPC_SendPlaying(start_time);
     }
 }
 
@@ -470,6 +491,14 @@ void OSSPlayer_GstECont_Playbin3_Next() {
     isPlaying = false;
 }
 
+void OSSPlayer_GstECont_Playbin3_StartQueue() {
+    //
+}
+
+void OSSPlayer_GstECont_Playbin3_EndQueue() {
+    //
+}
+
 /*
  * Utility Functions
  */
@@ -487,4 +516,42 @@ float OSSPlayer_CentsToPSF(float cents) {
     // Convert Cents to a Pitch Scale Factor
     float semitone = cents / 100.0;
     return pow(2, (semitone / 12.0f));
+}
+
+/*
+ * Functions that utilize Discord RPC
+ */
+void OSSPlayer_DiscordRPC_SendPaused() {
+    discordrpc_data* discordrpc = NULL;
+    discordrpc_struct_init(&discordrpc);
+    discordrpc->state = DISCORDRPC_STATE_PAUSED;
+    discordrpc_update(&discordrpc);
+    discordrpc_struct_deinit(&discordrpc);
+}
+
+void OSSPlayer_DiscordRPC_SendPlaying(time_t startTime) {
+    OSSPQ_SongStruct* songObject = OSSPQ_getAtPos(OSSPQ_getCurrentPos());
+    if (songObject == NULL) {
+        // Severe error - There was an item in the queue, but fetching it didn't work
+        printf("[OSSPlayer]\n");
+        // TODO: this
+    }
+
+    if (songObject->mode == OSSPQ_MODE_OPENSUBSONIC) {
+        // Prepare Discord RPC
+        discordrpc_data* discordrpc = NULL;
+        discordrpc_struct_init(&discordrpc);
+        discordrpc->state = DISCORDRPC_STATE_PLAYING_OPENSUBSONIC;
+        discordrpc->startTime = startTime;
+        discordrpc->songLength = songObject->duration;
+        discordrpc->songTitle = strdup(songObject->title);
+        discordrpc->songArtist = strdup(songObject->artist);
+        if (configObj->discordrpc_showCoverArt) {
+            discordrpc->coverArtUrl = strdup(songObject->coverArtUrl);
+        }
+        discordrpc_update(&discordrpc);
+        discordrpc_struct_deinit(&discordrpc);
+    }
+
+    OSSPQ_FreeSongObjectC(songObject);
 }

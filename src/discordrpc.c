@@ -9,7 +9,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include "external/discord-rpc/include/discord_rpc.h"
 #include "libopensubsonic/logger.h"
 #include "configHandler.h"
@@ -69,7 +68,6 @@ void discordrpc_update(discordrpc_data** discordrpc_struct) {
     } else if ((*discordrpc_struct)->state == DISCORDRPC_STATE_PLAYING_OPENSUBSONIC ||
            ((*discordrpc_struct)->state == DISCORDRPC_STATE_PLAYING_LOCALFILE)) {
         // Playing a song from an OpenSubsonic server
-        time_t currentTime = time(NULL);
         asprintf(&detailsString, "%s", (*discordrpc_struct)->songTitle);
         asprintf(&stateString, "by %s", (*discordrpc_struct)->songArtist);
         presence.details = detailsString;
@@ -78,25 +76,26 @@ void discordrpc_update(discordrpc_data** discordrpc_struct) {
             // TODO As of now, local file playback does NOT deal with cover art
             presence.largeImageKey = (*discordrpc_struct)->coverArtUrl;
         }
-        presence.startTimestamp = (long)currentTime;
-        presence.endTimestamp = (long)currentTime + (*discordrpc_struct)->songLength;
+        presence.startTimestamp = (long)((*discordrpc_struct)->startTime);
+        presence.endTimestamp = (long)((*discordrpc_struct)->startTime) + (*discordrpc_struct)->songLength;
         if (configObj->discordrpc_showSysDetails) {
             presence.largeImageText = discordrpc_osString;
         }
     } else if ((*discordrpc_struct)->state == DISCORDRPC_STATE_PLAYING_INTERNETRADIO) {
         // Playing an internet radio station
-        time_t currentTime = time(NULL);
         asprintf(&detailsString, "%s", (*discordrpc_struct)->songTitle);
         asprintf(&stateString, "Internet radio station");
         presence.details = detailsString;
         presence.state = stateString;
         presence.largeImageKey = (*discordrpc_struct)->coverArtUrl;
-        presence.startTimestamp = (long)currentTime;
+        presence.startTimestamp = (long)((*discordrpc_struct)->startTime);
         if (configObj->discordrpc_showSysDetails) {
             presence.largeImageText = discordrpc_osString;
         }
     } else if ((*discordrpc_struct)->state == DISCORDRPC_STATE_PAUSED) {
-
+        // Player is paused
+        asprintf(&detailsString, "Paused");
+        presence.details = detailsString;
     }
 
     presence.activity_type = DISCORD_ACTIVITY_TYPE_LISTENING;
